@@ -1,18 +1,29 @@
-import { initTRPC, TRPCError } from "@trpc/server";
-import { type NextRequest } from "next/server";
+import { TRPCError, initTRPC } from "@trpc/server";
+import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { db } from "@/lib/db";
+
+import { db } from "@/server/db";
 import { getUserFromHeaders } from "@/lib/shared-auth-middleware";
 
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const user = getUserFromHeaders(opts.headers);
+type CreateContextOptions = {
+  user: { id: string; email: string; name?: string; } | null;
+};
 
+const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
+    user: opts.user,
     db,
-    user,
-    ...opts,
   };
+};
+
+export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+  // Get user from headers set by auth middleware
+  const user = opts.req ? getUserFromHeaders(new Headers(opts.req.headers as Record<string, string>)) : null;
+
+  return createInnerTRPCContext({
+    user,
+  });
 };
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
@@ -29,13 +40,11 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   },
 });
 
-export const createCallerFactory = t.createCallerFactory;
-
 export const createTRPCRouter = t.router;
 
 export const publicProcedure = t.procedure;
 
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
@@ -46,14 +55,4 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   });
 });
 
-export const businessOwnerProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  if (!ctx.user.businessEnrolled) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "User not enrolled in business management"
-    });
-  }
-  return next({
-    ctx,
-  });
-});
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);

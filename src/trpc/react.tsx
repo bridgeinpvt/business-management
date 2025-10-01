@@ -3,36 +3,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { loggerLink, unstable_httpBatchStreamLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
-import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
-import superjson from "superjson";
 
 import { type AppRouter } from "@/server/api/root";
-
-const createQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 30 * 1000,
-      },
-    },
-  });
-
-let clientQueryClientSingleton: QueryClient | undefined = undefined;
-const getQueryClient = () => {
-  if (typeof window === "undefined") {
-    return createQueryClient();
-  }
-  return (clientQueryClientSingleton ??= createQueryClient());
-};
+import { getUrl, transformer } from "./shared";
 
 export const api = createTRPCReact<AppRouter>();
 
-export type RouterInputs = inferRouterInputs<AppRouter>;
-export type RouterOutputs = inferRouterOutputs<AppRouter>;
-
-export function TRPCReactProvider(props: { children: React.ReactNode }) {
-  const queryClient = getQueryClient();
+export function TRPCReactProvider(props: {
+  children: React.ReactNode;
+  cookies: string;
+}) {
+  const [queryClient] = useState(() => new QueryClient());
 
   const [trpcClient] = useState(() =>
     api.createClient({
@@ -43,16 +25,17 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
             (op.direction === "down" && op.result instanceof Error),
         }),
         unstable_httpBatchStreamLink({
-          url: getBaseUrl() + "/api/trpc",
-          transformer: superjson,
+          transformer,
+          url: getUrl(),
           headers() {
-            const headers = new Map<string, string>();
-            headers.set("x-trpc-source", "react");
-            return Object.fromEntries(headers);
+            return {
+              cookie: props.cookies,
+              "x-trpc-source": "react",
+            };
           },
         }),
       ],
-    }),
+    })
   );
 
   return (
@@ -62,10 +45,4 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
       </api.Provider>
     </QueryClientProvider>
   );
-}
-
-function getBaseUrl() {
-  if (typeof window !== "undefined") return window.location.origin;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
 }

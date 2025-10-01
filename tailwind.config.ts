@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme";
+const { fontFamily } = require("tailwindcss/defaultTheme");
 
 const config: Config = {
   darkMode: ["class"],
@@ -19,13 +19,14 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans)', ...fontFamily.sans],
+        sans: ['Lato', 'Inter', 'Work Sans', 'Roboto', ...fontFamily.sans],
+        body: ['Work Sans', 'Noto Sans', ...fontFamily.sans],
       },
       colors: {
-        // Business theme colors
-        'business-primary': '#2563eb',
-        'business-secondary': '#dbeafe',
-        'business-accent': '#3b82f6',
+        // Design system colors
+        'primary-purple': '#6D28D9',
+        'secondary-purple': '#EDE9FE',
+        'accent-purple': '#7847eb',
 
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
