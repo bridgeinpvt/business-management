@@ -9,6 +9,10 @@ import { referralRouter } from "./routers/referral";
 import { notificationRouter } from "./routers/notification";
 import { filesRouter } from "./routers/files";
 import { walletRouter } from "./routers/wallet";
+import { businessRouter } from "./routers/business";
+import { productRouter } from "./routers/product";
+import { customerRouter } from "./routers/customer";
+import { orderRouter } from "./routers/order";
 
 /**
  * This is the primary router for your server.
@@ -26,6 +30,10 @@ export const appRouter = createTRPCRouter({
   notification: notificationRouter,
   files: filesRouter,
   wallet: walletRouter,
+  business: businessRouter,
+  product: productRouter,
+  customer: customerRouter,
+  order: orderRouter,
 });
 
 // export type definition of API

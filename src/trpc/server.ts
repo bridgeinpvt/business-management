@@ -6,6 +6,8 @@ import { type AppRouter } from "@/server/api/root";
 import { appRouter } from "@/server/api/root";
 import { createTRPCContext } from "@/server/api/trpc";
 import { db } from "@/server/db";
+import { headers } from "next/headers";
+import { getUserFromHeaders } from "@/lib/shared-auth-middleware";
 
 /**
  * This function is used to create a caller for the tRPC server.
@@ -16,10 +18,11 @@ import { db } from "@/server/db";
  * Creates the server API caller with proper context.
  */
 const createContext = async () => {
-  // Get session for server-side calls
-  const session = await getServerSession(authConfig) as Session | null;
+  // Get user from headers for server-side calls
+  const headersList = headers();
+  const user = getUserFromHeaders(headersList);
   return {
-    session,
+    user,
     db,
   };
 };

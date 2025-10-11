@@ -17,7 +17,7 @@ export const customerRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -90,7 +90,7 @@ export const customerRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -224,7 +224,7 @@ export const customerRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -249,7 +249,7 @@ export const customerRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 

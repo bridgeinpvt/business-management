@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@prisma/client": path.resolve(__dirname, "../data-hub/node_modules/@prisma/client"),
+    };
+    return config;
+  },
   async headers() {
     return [
       {

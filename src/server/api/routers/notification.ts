@@ -11,7 +11,7 @@ export const notificationRouter = createTRPCRouter({
     }))
     .query(async ({ ctx, input }) => {
       const { limit, unreadOnly } = input;
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
       
       const notifications = await ctx.db.notification.findMany({
         where: {
@@ -32,7 +32,7 @@ export const notificationRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { notificationId } = input;
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
       
       await ctx.db.notification.updateMany({
         where: {
@@ -50,7 +50,7 @@ export const notificationRouter = createTRPCRouter({
   // Mark all notifications as read
   markAllAsRead: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
       
       await ctx.db.notification.updateMany({
         where: {
@@ -68,7 +68,7 @@ export const notificationRouter = createTRPCRouter({
   // Get unread count
   getUnreadCount: protectedProcedure
     .query(async ({ ctx }) => {
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
       
       const count = await ctx.db.notification.count({
         where: {

@@ -31,7 +31,7 @@ export const productRouter = createTRPCRouter({
         select: { ownerId: true, name: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -62,7 +62,7 @@ export const productRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -225,7 +225,7 @@ export const productRouter = createTRPCRouter({
       }
 
       // Check if user owns the business
-      if (product.business.ownerId !== ctx.session.user.id) {
+      if (product.business.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -288,7 +288,7 @@ export const productRouter = createTRPCRouter({
         },
       });
 
-      if (product?.business.ownerId !== ctx.session.user.id) {
+      if (product?.business.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -311,7 +311,7 @@ export const productRouter = createTRPCRouter({
         },
       });
 
-      if (product?.business.ownerId !== ctx.session.user.id) {
+      if (product?.business.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -339,7 +339,7 @@ export const productRouter = createTRPCRouter({
         },
       });
 
-      if (product?.business.ownerId !== ctx.session.user.id) {
+      if (product?.business.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -365,7 +365,7 @@ export const productRouter = createTRPCRouter({
         },
       });
 
-      if (product?.business.ownerId !== ctx.session.user.id) {
+      if (product?.business.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -384,7 +384,7 @@ export const productRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 

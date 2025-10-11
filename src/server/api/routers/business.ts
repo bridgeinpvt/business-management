@@ -30,14 +30,14 @@ export const businessRouter = createTRPCRouter({
       return await ctx.db.business.create({
         data: {
           ...input,
-          ownerId: ctx.session.user.id,
+          ownerId: ctx.user.id,
         },
       });
     }),
 
   getMyBusinesses: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.db.business.findMany({
-      where: { ownerId: ctx.session.user.id },
+      where: { ownerId: ctx.user.id },
       include: {
         _count: {
           select: {
@@ -76,7 +76,7 @@ export const businessRouter = createTRPCRouter({
       });
 
       // Check if user owns this business or if it's public
-      if (business?.ownerId !== ctx.session.user.id && !business?.isActive) {
+      if (business?.ownerId !== ctx.user.id && !business?.isActive) {
         throw new Error("Business not found or access denied");
       }
 
@@ -198,7 +198,7 @@ export const businessRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -217,7 +217,7 @@ export const businessRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -235,7 +235,7 @@ export const businessRouter = createTRPCRouter({
         select: { ownerId: true, isActive: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -257,7 +257,7 @@ export const businessRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 

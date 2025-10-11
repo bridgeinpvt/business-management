@@ -100,7 +100,7 @@ export const orderRouter = createTRPCRouter({
         const newOrder = await tx.order.create({
           data: {
             orderNumber,
-            userId: ctx.session.user.id,
+            userId: ctx.user.id,
             businessId: input.businessId,
             totalAmount,
             discountAmount,
@@ -148,12 +148,12 @@ export const orderRouter = createTRPCRouter({
         await tx.customer.upsert({
           where: {
             userId_businessId: {
-              userId: ctx.session.user.id,
+              userId: ctx.user.id,
               businessId: input.businessId,
             },
           },
           create: {
-            userId: ctx.session.user.id,
+            userId: ctx.user.id,
             businessId: input.businessId,
             orderCount: 1,
             lastOrderDate: new Date(),
@@ -182,7 +182,7 @@ export const orderRouter = createTRPCRouter({
       const skip = (input.page - 1) * input.limit;
 
       const where = {
-        userId: ctx.session.user.id,
+        userId: ctx.user.id,
         ...(input.status !== "all" && { status: input.status }),
       };
 
@@ -239,7 +239,7 @@ export const orderRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -333,7 +333,7 @@ export const orderRouter = createTRPCRouter({
       }
 
       // Check if user owns the order or the business
-      if (order.userId !== ctx.session.user.id && order.business.ownerId !== ctx.session.user.id) {
+      if (order.userId !== ctx.user.id && order.business.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -357,7 +357,7 @@ export const orderRouter = createTRPCRouter({
         },
       });
 
-      if (!order || order.business.ownerId !== ctx.session.user.id) {
+      if (!order || order.business.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 
@@ -430,7 +430,7 @@ export const orderRouter = createTRPCRouter({
       }
 
       // Check if user can cancel (customer or business owner)
-      const canCancel = order.userId === ctx.session.user.id || order.business.ownerId === ctx.session.user.id;
+      const canCancel = order.userId === ctx.user.id || order.business.ownerId === ctx.user.id;
       if (!canCancel) {
         throw new Error("Access denied");
       }
@@ -482,7 +482,7 @@ export const orderRouter = createTRPCRouter({
         select: { ownerId: true },
       });
 
-      if (business?.ownerId !== ctx.session.user.id) {
+      if (business?.ownerId !== ctx.user.id) {
         throw new Error("Access denied");
       }
 

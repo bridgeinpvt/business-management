@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack -p 3004",
-    "build": "next build --turbopack",
+    "dev": "next dev -p 3004",
+    "build": "next build",
     "start": "next start -p 3004",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "cd ../data-hub && npm run db:generate && cd ../business-management && cp -r ../data-hub/node_modules/.prisma node_modules/ && cp -r ../data-hub/node_modules/@prisma node_modules/",
+    "db:generate": "cd ../data-hub && npm run db:generate && cp -r ../data-hub/node_modules/.prisma node_modules/ && cp -r ../data-hub/node_modules/@prisma node_modules/",
+    "db:push": "cd ../data-hub && npm run db:push",
+    "db:migrate": "cd ../data-hub && npm run db:migrate",
+    "db:studio": "cd ../data-hub && npm run db:studio"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.899.0",
@@ -50,25 +55,26 @@
     "next": "15.5.4",
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
-    "prisma": "^6.16.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.63.0",
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
-    "tailwind-merge": "^3.3.1",
+    "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.11"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "tailwindcss": "^4",
+    "postcss": "^8.4.39",
+    "prisma": "^6.16.2",
+    "tailwindcss": "^3.4.3",
     "typescript": "^5"
   }
 }

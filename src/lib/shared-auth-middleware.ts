@@ -170,5 +170,5 @@ export function createLogoutUrl(authDomain: string, callbackUrl?: string): strin
  */
 export function createLoginUrl(authDomain: string, callbackUrl?: string): string {
   const callback = callbackUrl || window.location.href;
-  return `http://${authDomain}/api/auth/signin?callbackUrl=${encodeURIComponent(callback)}`;
+  return `http://${authDomain}/login?callbackUrl=${encodeURIComponent(callback)}`;
 }
