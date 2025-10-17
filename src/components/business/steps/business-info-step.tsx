@@ -1,9 +1,8 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
@@ -27,14 +26,14 @@ const BUSINESS_CATEGORIES = [
 ];
 
 interface BusinessInfoStepProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FieldValues>;
 }
 
 export function BusinessInfoStep({ form }: BusinessInfoStepProps) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold mb-2">Let's start with the basics</h3>
+        <h3 className="text-lg font-semibold mb-2">Let&apos;s start with the basics</h3>
         <p className="text-gray-600 dark:text-gray-400">
           Tell us about your business so we can create the perfect profile for you.
         </p>

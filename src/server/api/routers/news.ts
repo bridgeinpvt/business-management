@@ -64,7 +64,7 @@ async function fetchNewsFromAPI(category: string = "technology", pageSize: numbe
   }
 }
 
-async function syncMultipleCategories(ctx: any, categories: string[], pageSize: number = 10) {
+async function syncMultipleCategories(ctx: {db: typeof import("@/server/db").db}, categories: string[], pageSize: number = 10) {
   const results = [];
   
   for (const category of categories) {
@@ -137,7 +137,7 @@ export const newsRouter = createTRPCRouter({
   syncAllCategories: publicProcedure
     .input(z.object({
       pageSize: z.number().min(1).max(50).optional().default(15)
-    }).optional().default({}))
+    }).optional().default({ pageSize: 15 }))
     .mutation(async ({ ctx, input = {} }) => {
       const { pageSize = 15 } = input;
       const categories = ["business", "technology", "startups"];
@@ -168,7 +168,7 @@ export const newsRouter = createTRPCRouter({
     .input(z.object({
       category: z.enum(["business", "technology", "startups"]).optional().default("technology"),
       pageSize: z.number().min(1).max(50).optional().default(20)
-    }).optional().default({}))
+    }).optional().default({ category: "technology" as const, pageSize: 20 }))
     .mutation(async ({ ctx, input = {} }) => {
       const { category = "general", pageSize = 20 } = input;
       
@@ -248,7 +248,7 @@ export const newsRouter = createTRPCRouter({
   getNews: publicProcedure
     .input(z.object({
       limit: z.number().min(1).max(50).optional().default(10)
-    }).optional().default({}))
+    }).optional().default({ limit: 10 }))
     .query(async ({ ctx, input = {} }) => {
       const { limit = 10 } = input;
       
@@ -284,7 +284,7 @@ export const newsRouter = createTRPCRouter({
     .input(z.object({
       limit: z.number().min(1).max(50).optional().default(10),
       category: z.enum(["business", "technology", "startups"]).optional().default("business")
-    }).optional().default({}))
+    }).optional().default({ limit: 10, category: "business" as const }))
     .query(async ({ ctx, input = {} }) => {
       const { limit = 10, category = "business" } = input;
       

@@ -171,7 +171,7 @@ export const filesRouter = createTRPCRouter({
           })),
           nextCursor,
         };
-      } catch (error) {
+      } catch {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch files",

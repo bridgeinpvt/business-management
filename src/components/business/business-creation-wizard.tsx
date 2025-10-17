@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn, FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ const businessSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   zipCode: z.string().optional(),
-  country: z.string().default("India"),
+  country: z.string().optional(),
 
   // Step 4: Payment Setup
   upiId: z.string().optional(),
@@ -63,17 +63,31 @@ export function BusinessCreationWizard({
   onStepChange,
   onComplete,
 }: BusinessCreationWizardProps) {
-  const [businessData, setBusinessData] = useState<Partial<BusinessFormData>>({});
+  const [businessData, setBusinessData] = useState<Partial<BusinessFormData>>({
+    country: "India",
+  });
   const [categories, setCategories] = useState<Array<{ name: string; description?: string }>>([]);
-  const [products, setProducts] = useState<Array<any>>([]);
+
+  // Product type that matches what ProductsStep expects
+  interface Product {
+    name: string;
+    description?: string;
+    price: number;
+    originalPrice?: number;
+    category?: string;
+    images: string[];
+    inventory: number;
+  }
+
+  const [products, setProducts] = useState<Product[]>([]);
 
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(businessSchema),
-    defaultValues: businessData,
+    defaultValues: businessData as BusinessFormData,
   });
 
   const createBusinessMutation = api.business.create.useMutation({
-    onSuccess: (business) => {
+    onSuccess: () => {
       toast.success("Business created successfully!");
       onComplete();
     },
@@ -127,7 +141,7 @@ export function BusinessCreationWizard({
 
     try {
       await createBusinessMutation.mutateAsync(finalData);
-    } catch (error) {
+    } catch {
       // Error is handled in the mutation
     }
   };
@@ -135,13 +149,13 @@ export function BusinessCreationWizard({
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <BusinessInfoStep form={form} />;
+        return <BusinessInfoStep form={form as unknown as UseFormReturn<FieldValues>} />;
       case 2:
-        return <BusinessDetailsStep form={form} />;
+        return <BusinessDetailsStep form={form as unknown as UseFormReturn<FieldValues>} />;
       case 3:
-        return <LocationStep form={form} />;
+        return <LocationStep form={form as unknown as UseFormReturn<FieldValues>} />;
       case 4:
-        return <PaymentSetupStep form={form} />;
+        return <PaymentSetupStep form={form as unknown as UseFormReturn<FieldValues>} />;
       case 5:
         return (
           <CategoriesStep

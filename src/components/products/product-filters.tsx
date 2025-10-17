@@ -14,11 +14,10 @@ interface ProductFiltersProps {
     status: string;
     sortBy: string;
   };
-  onFiltersChange: (filters: any) => void;
-  businessId: string;
+  onFiltersChange: (filters: { search: string; category: string; status: string; sortBy: string }) => void;
 }
 
-export function ProductFilters({ filters, onFiltersChange, businessId }: ProductFiltersProps) {
+export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps) {
   const updateFilter = (key: string, value: string) => {
     onFiltersChange({ ...filters, [key]: value });
   };

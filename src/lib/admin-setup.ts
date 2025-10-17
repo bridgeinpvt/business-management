@@ -65,13 +65,10 @@ export async function sendAdminFollowUpMessage(
     // Create context for admin user
     const adminCtx = {
       db,
-      session: {
-        user: {
-          id: adminUser.id,
-          email: adminUser.email,
-          name: adminUser.name
-        },
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+      user: {
+        id: adminUser.id,
+        email: adminUser.email || '',
+        name: adminUser.name || undefined
       }
     };
 
@@ -132,13 +129,10 @@ export async function processAdminResponse(
     const { chatRouter } = await import("@/server/api/routers/chat");
     const adminCtx = {
       db,
-      session: {
-        user: {
-          id: adminUser.id,
-          email: adminUser.email,
-          name: adminUser.name
-        },
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+      user: {
+        id: adminUser.id,
+        email: adminUser.email || '',
+        name: adminUser.name || undefined
       }
     };
 

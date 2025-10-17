@@ -3,8 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/react";
-import { Package, Star } from "lucide-react";
+import { Package } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import Image from "next/image";
 
 interface TopProductsProps {
   businessId: string;
@@ -58,9 +59,11 @@ export function TopProducts({ businessId, timeRange }: TopProductsProps) {
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                     {product.images && product.images.length > 0 ? (
-                      <img
+                      <Image
                         src={product.images[0]}
                         alt={product.name}
+                        width={300}
+                        height={300}
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
@@ -79,12 +82,6 @@ export function TopProducts({ businessId, timeRange }: TopProductsProps) {
                   <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <span>{product.totalSales} sold</span>
                     <span>{formatCurrency(product.price)}</span>
-                    {product.rating && (
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        <span>{product.rating.toFixed(1)}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
 

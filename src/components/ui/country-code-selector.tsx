@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/command";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { COUNTRY_CODES, getPopularCountries, getAllCountries, type CountryCode } from "@/lib/country-codes";
+import { COUNTRY_CODES, getPopularCountries, getAllCountries } from "@/lib/country-codes";
 
 interface CountryCodeSelectorProps {
   value?: string;

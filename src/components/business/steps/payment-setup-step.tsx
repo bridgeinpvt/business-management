@@ -1,12 +1,12 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { CreditCard, Smartphone, Building, FileText } from "lucide-react";
 
 interface PaymentSetupStepProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FieldValues>;
 }
 
 export function PaymentSetupStep({ form }: PaymentSetupStepProps) {
@@ -16,7 +16,7 @@ export function PaymentSetupStep({ form }: PaymentSetupStepProps) {
         <CreditCard className="w-12 h-12 text-blue-600 mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">Set up payment methods</h3>
         <p className="text-gray-600 dark:text-gray-400">
-          Configure how you'll receive payments from customers.
+          Configure how you&apos;ll receive payments from customers.
         </p>
       </div>
 
@@ -129,7 +129,7 @@ export function PaymentSetupStep({ form }: PaymentSetupStepProps) {
 
       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          ℹ️ <strong>Note:</strong> You can skip this step and add payment methods later. However, customers won't be able to place orders until payment methods are configured.
+          ℹ️ <strong>Note:</strong> You can skip this step and add payment methods later. However, customers won&apos;t be able to place orders until payment methods are configured.
         </p>
       </div>
     </div>

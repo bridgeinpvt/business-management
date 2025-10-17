@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, UserPlus, Construction } from "lucide-react";
+import { UserPlus, Construction } from "lucide-react";
 
 export default function EmployeesPage() {
   return (
@@ -23,7 +23,7 @@ export default function EmployeesPage() {
           <Construction className="h-20 w-20 text-muted-foreground mb-4" />
           <h3 className="text-2xl font-semibold mb-2">Coming Soon</h3>
           <p className="text-muted-foreground text-center max-w-md">
-            Employee management features are under development. You'll be able to add, manage, and assign roles to your team members.
+            Employee management features are under development. You&apos;ll be able to add, manage, and assign roles to your team members.
           </p>
         </CardContent>
       </Card>

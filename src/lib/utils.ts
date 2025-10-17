@@ -24,3 +24,32 @@ export function formatDate(date: string | Date): string {
     minute: '2-digit',
   }).format(dateObj)
 }
+
+export function generateOrderNumber(): string {
+  const timestamp = Date.now().toString(36).toUpperCase()
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase()
+  return `ORD-${timestamp}-${random}`
+}
+
+export function generateSKU(productName: string, businessName?: string): string {
+  let prefix = productName
+    .split(' ')
+    .map(word => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .substring(0, 3)
+
+  // If business name is provided, add it to the SKU
+  if (businessName) {
+    const businessPrefix = businessName
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2)
+    prefix = `${businessPrefix}-${prefix}`
+  }
+
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase()
+  return `${prefix}-${random}`
+}

@@ -1,42 +1,30 @@
 import multer from 'multer';
-import { NextRequest } from 'next/server';
 
 // Configure multer to store files in memory
-const storage = multer.memoryStorage();
+// const storage = multer.memoryStorage();
 
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    // Allow only image files
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  },
-});
+// const upload = multer({
+//   storage,
+//   limits: {
+//     fileSize: 5 * 1024 * 1024, // 5MB limit
+//   },
+//   fileFilter: (req, file, cb) => {
+//     // Allow only image files
+//     if (file.mimetype.startsWith('image/')) {
+//       cb(null, true);
+//     } else {
+//       cb(new Error('Only image files are allowed'));
+//     }
+//   },
+// });
 
 // Helper function to promisify multer for Next.js API routes
-export const uploadSingle = (fieldName: string) => {
+// Note: This is a placeholder. For actual Next.js usage, use different file upload handling
+export const uploadSingle = (_fieldName: string) => {
   return new Promise<Express.Multer.File>((resolve, reject) => {
-    const uploadHandler = upload.single(fieldName);
-    
-    return uploadHandler(
-      {} as any, // req object (not used in memory storage)
-      {} as any, // res object (not used)
-      (error: any) => {
-        if (error) {
-          reject(error);
-        } else {
-          // This won't actually work with Next.js API routes
-          // We'll handle file parsing differently
-          resolve({} as Express.Multer.File);
-        }
-      }
-    );
+    // This is not used in the actual Next.js app - we handle uploads differently
+    // Kept for potential future use or reference
+    reject(new Error("Use Next.js FormData handling instead of multer"));
   });
 };
 

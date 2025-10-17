@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { User, Bell, Lock, Palette, Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";

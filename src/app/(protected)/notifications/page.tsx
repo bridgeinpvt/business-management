@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bell, BellOff, Check, CheckCheck, Package, ShoppingCart, Users, TrendingUp } from "lucide-react";
@@ -126,7 +126,7 @@ export default function NotificationsPage() {
                               {notification.title}
                             </h3>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {notification.message}
+                              {notification.content}
                             </p>
                             <p className="text-xs text-muted-foreground mt-2">
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}

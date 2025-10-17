@@ -15,9 +15,9 @@ const createProductSchema = z.object({
   inventory: z.number().min(0, "Inventory must be positive").default(0),
   lowStockAlert: z.number().min(0, "Low stock alert must be positive").default(5),
   weight: z.number().min(0, "Weight must be positive").optional(),
-  dimensions: z.record(z.number()).optional(),
-  specifications: z.record(z.any()).optional(),
-  variants: z.record(z.array(z.string())).optional(),
+  dimensions: z.record(z.string(), z.number()).optional(),
+  specifications: z.record(z.string(), z.any()).optional(),
+  variants: z.record(z.string(), z.array(z.string())).optional(),
   businessId: z.string(),
 });
 
@@ -326,11 +326,6 @@ export const productRouter = createTRPCRouter({
       // Verify ownership
       const product = await ctx.db.product.findUnique({
         where: { id: input.id },
-        include: {
-          business: {
-            select: { ownerId: true },
-          },
-        },
         select: {
           isActive: true,
           business: {

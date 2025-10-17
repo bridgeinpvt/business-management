@@ -1,6 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -14,11 +14,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Middleware already handles authentication, just get user data
-  const { data: currentUser, isLoading: userLoading, error: userError } = api.user.getCurrentUser.useQuery(
+  const { isLoading: userLoading, error: userError } = api.user.getCurrentUser.useQuery(
     undefined,
     {
       retry: false,

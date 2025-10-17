@@ -32,7 +32,7 @@ export function SalesChart({ businessId, timeRange }: SalesChartProps) {
 
   const dailyData = orderAnalytics?.dailyData || {};
   const dates = Object.keys(dailyData).sort();
-  const maxRevenue = Math.max(...Object.values(dailyData).map((d: any) => d.revenue));
+  const maxRevenue = Math.max(...Object.values(dailyData).map((d: { revenue: number; orders: number }) => d.revenue));
 
   return (
     <Card>

@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function HomePage() {
   const router = useRouter();
-  const { data: session, status } = useAuth();
+  const { status } = useAuth();
 
   useEffect(() => {
     if (status === "loading") return;
@@ -16,7 +16,9 @@ export default function HomePage() {
       router.replace("/dashboard");
     } else {
       // Redirect unauthenticated users to auth-service login
-      window.location.href = `http://localhost:3001/login?callbackUrl=${encodeURIComponent('http://localhost:3004/dashboard')}`;
+      const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
+      const businessUrl = process.env.NEXT_PUBLIC_BUSINESS_URL || "http://localhost:3004";
+      window.location.href = `${authUrl}/login?callbackUrl=${encodeURIComponent(`${businessUrl}/dashboard`)}`;
     }
   }, [status, router]);
 

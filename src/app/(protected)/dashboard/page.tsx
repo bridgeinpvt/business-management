@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Package, Users, ShoppingCart, TrendingUp, Store, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
@@ -88,7 +87,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's an overview of your business.</p>
+          <p className="text-muted-foreground">Welcome back! Here&apos;s an overview of your business.</p>
         </div>
         <Button onClick={() => router.push("/business")}>
           <Store className="mr-2 h-4 w-4" />
@@ -143,11 +142,11 @@ export default function DashboardPage() {
                     <div className="text-right">
                       <p className="font-semibold">₹{order.finalAmount?.toFixed(2)}</p>
                       <p className={`text-xs ${
-                        order.orderStatus === 'DELIVERED' ? 'text-green-600' :
-                        order.orderStatus === 'CANCELLED' ? 'text-red-600' :
+                        order.status === 'DELIVERED' ? 'text-green-600' :
+                        order.status === 'CANCELLED' ? 'text-red-600' :
                         'text-yellow-600'
                       }`}>
-                        {order.orderStatus}
+                        {order.status}
                       </p>
                     </div>
                   </div>

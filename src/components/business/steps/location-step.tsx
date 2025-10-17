@@ -1,6 +1,6 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,7 +19,7 @@ const INDIAN_STATES = [
 ];
 
 interface LocationStepProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FieldValues>;
 }
 
 export function LocationStep({ form }: LocationStepProps) {
@@ -123,9 +123,9 @@ export function LocationStep({ form }: LocationStepProps) {
                   <FormLabel>Country</FormLabel>
                   <FormControl>
                     <Input
-                      value="India"
-                      disabled
                       {...field}
+                      value={field.value || "India"}
+                      disabled
                     />
                   </FormControl>
                   <FormMessage />

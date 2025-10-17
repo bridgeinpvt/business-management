@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Store, Edit, Trash2, Plus, MapPin, Phone, Mail, Globe, Check, X } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import type { RouterOutputs } from "@/trpc/shared";
+
+type Business = RouterOutputs["business"]["getMyBusinesses"][number];
 
 export default function BusinessPage() {
-  const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingBusiness, setEditingBusiness] = useState<any>(null);
+  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
 
   // Get user's businesses
   const { data: businesses, isLoading, refetch } = api.business.getMyBusinesses.useQuery();

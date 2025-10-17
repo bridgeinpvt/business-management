@@ -212,7 +212,7 @@ export function LocationSelector({
       
       {locationType === "preset" && (
         <p className="text-xs text-muted-foreground">
-          Can't find your location? Switch to manual entry above.
+          Can&apos;t find your location? Switch to manual entry above.
         </p>
       )}
     </div>

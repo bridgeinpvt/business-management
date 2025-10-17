@@ -23,6 +23,7 @@ import { api } from "@/trpc/react";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface ProductsGridProps {
   businessId: string;
@@ -44,7 +45,7 @@ export function ProductsGrid({ businessId, filters, currentPage, onPageChange }:
       limit: 12,
       category: filters.category || undefined,
       search: filters.search || undefined,
-      status: filters.status as any,
+      status: filters.status as "all" | "active" | "inactive",
     },
     { enabled: !!businessId }
   );
@@ -79,7 +80,7 @@ export function ProductsGrid({ businessId, filters, currentPage, onPageChange }:
     }
   };
 
-  const handleDuplicateProduct = (productId: string) => {
+  const handleDuplicateProduct = (_productId: string) => {
     // TODO: Implement product duplication
     toast.success("Product duplication feature coming soon!");
   };
@@ -146,9 +147,11 @@ export function ProductsGrid({ businessId, filters, currentPage, onPageChange }:
               {/* Product Image */}
               <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
                 {product.images && product.images.length > 0 ? (
-                  <img
+                  <Image
                     src={product.images[0]}
                     alt={product.name}
+                    width={500}
+                    height={500}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                 ) : (

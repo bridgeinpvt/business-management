@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Share2, Twitter, Facebook, Linkedin, Link, Copy, Check } from "lucide-react"
+import { Share2, Twitter, Facebook, Linkedin, Link, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,

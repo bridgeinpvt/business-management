@@ -149,11 +149,50 @@ export const notificationRouter = createTRPCRouter({
         return { success: true, count: notifications.length };
       }
     }),
+
+  // Delete notification
+  deleteNotification: protectedProcedure
+    .input(z.object({
+      notificationId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { notificationId } = input;
+      const { user, db } = ctx;
+
+      // Verify the notification belongs to the user
+      const notification = await db.notification.findUnique({
+        where: { id: notificationId },
+      });
+
+      if (!notification || notification.userId !== user.id) {
+        throw new Error("Notification not found");
+      }
+
+      await db.notification.delete({
+        where: { id: notificationId },
+      });
+
+      return { success: true };
+    }),
 });
 
 // Helper function to create notifications (can be used by other routers)
 export async function createNotificationHelper(
-  db: any,
+  db: {
+    notification: {
+      create: (args: {
+        data: {
+          userId: string;
+          type: NotificationType;
+          title: string;
+          content?: string;
+          relatedId?: string;
+          actionUrl?: string;
+          isRead: boolean;
+        };
+      }) => Promise<unknown>;
+    };
+  },
   data: {
     userId: string;
     type: NotificationType;

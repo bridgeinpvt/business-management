@@ -7,6 +7,7 @@ export interface AuthUser {
   image?: string;
   capsuleEnrolled: boolean;
   businessEnrolled: boolean;
+  userRole?: string;
 }
 
 export interface AuthConfig {
@@ -128,6 +129,7 @@ export async function authMiddleware(request: NextRequest, config: AuthConfig): 
   requestHeaders.set('x-user-name', user.name || '');
   requestHeaders.set('x-user-capsule-enrolled', user.capsuleEnrolled.toString());
   requestHeaders.set('x-user-business-enrolled', user.businessEnrolled.toString());
+  requestHeaders.set('x-user-role', user.userRole || '');
 
   return NextResponse.next({
     request: {
@@ -154,6 +156,7 @@ export function getUserFromHeaders(headers: Headers): AuthUser | null {
     image: undefined, // Not passed through headers for security
     capsuleEnrolled: headers.get('x-user-capsule-enrolled') === 'true',
     businessEnrolled: headers.get('x-user-business-enrolled') === 'true',
+    userRole: headers.get('x-user-role') || undefined,
   };
 }
 

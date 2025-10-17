@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Package, Plus, Download, Upload } from "lucide-react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface ProductsHeaderProps {
   businessId: string;
@@ -77,9 +78,11 @@ export function ProductsHeader({ businessId }: ProductsHeaderProps) {
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 {selectedBusiness.logoUrl ? (
-                  <img
+                  <Image
                     src={selectedBusiness.logoUrl}
                     alt={selectedBusiness.name}
+                    width={150}
+                    height={150}
                     className="w-full h-full rounded-lg object-cover"
                   />
                 ) : (

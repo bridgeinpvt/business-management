@@ -2,9 +2,12 @@
 
 import React, { createContext, useContext, ReactNode } from "react";
 import { api } from "@/trpc/react";
+import type { RouterOutputs } from "@/trpc/shared";
+
+type User = RouterOutputs["user"]["getCurrentUser"];
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   isLoading: boolean;
 }
 
@@ -42,8 +45,10 @@ export function useAuth() {
 
 // Logout function to replace signOut from next-auth
 export function signOut() {
+  const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
+  const businessUrl = process.env.NEXT_PUBLIC_BUSINESS_URL || "http://localhost:3004";
   // Clear cookies and redirect to auth-service logout
-  window.location.href = 'http://localhost:3001/api/auth/signout?callbackUrl=' + encodeURIComponent('http://localhost:3004');
+  window.location.href = `${authUrl}/api/auth/signout?callbackUrl=${encodeURIComponent(businessUrl)}`;
 }
 
 export { AuthContext };

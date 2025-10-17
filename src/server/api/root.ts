@@ -40,6 +40,9 @@ export const appRouter = createTRPCRouter({
 export type AppRouter = typeof appRouter;
 
 // Export a server-side caller factory
-export const createCaller = (ctx: any) => {
+export const createCaller = (ctx: {
+  user: { id: string; email: string; name?: string; userRole?: string; } | null;
+  db: typeof import("@/server/db").db;
+}) => {
   return appRouter.createCaller(ctx);
 };

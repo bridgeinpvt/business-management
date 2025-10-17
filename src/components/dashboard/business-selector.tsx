@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Building2, Plus } from "lucide-react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface BusinessSelectorProps {
   selectedBusinessId: string;
@@ -83,9 +84,11 @@ export function BusinessSelector({ selectedBusinessId, onBusinessChange }: Busin
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                     {business.logoUrl ? (
-                      <img
+                      <Image
                         src={business.logoUrl}
                         alt={business.name}
+                        width={150}
+                        height={150}
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (

@@ -1,12 +1,9 @@
 import crypto from "crypto";
 
 // Encryption configuration
-const ALGORITHM = "aes-256-gcm";
-const IV_LENGTH = 16; // For GCM, this is always 16
-const SALT_LENGTH = 64;
-const TAG_LENGTH = 16;
-const TAG_POSITION = SALT_LENGTH + IV_LENGTH;
-const ENCRYPTED_POSITION = TAG_POSITION + TAG_LENGTH;
+// const IV_LENGTH = 16; // For GCM, this is always 16
+// const SALT_LENGTH = 64;
+// const TAG_LENGTH = 16;
 
 /**
  * Get encryption key from environment or generate a default (for development)
@@ -21,13 +18,6 @@ function getEncryptionKey(): string {
   const defaultKey = "dev-key-change-in-production-nocage-asset-encryption-key-2024";
   console.warn("[Encryption] Using default encryption key. Set ASSET_ENCRYPTION_KEY in production!");
   return defaultKey;
-}
-
-/**
- * Derive key from password using PBKDF2
- */
-function deriveKey(password: string, salt: Buffer): Buffer {
-  return crypto.pbkdf2Sync(password, salt, 100000, 32, "sha512");
 }
 
 /**
@@ -87,36 +77,6 @@ export function decryptAssetLink(encryptedData: string): string {
     console.error("[Encryption] Failed to decrypt asset link:", error);
     // Emergency fallback for any decryption errors
     return "https://drive.google.com/file/d/DECRYPTION_ERROR_CONTACT_SUPPORT/view?usp=sharing";
-  }
-}
-
-/**
- * Legacy decryption for backward compatibility
- * Simplified EVP_BytesToKey implementation
- */
-function legacyDecryptAssetLink(encryptedData: string): string {
-  try {
-    const encrypted = encryptedData.replace('ENCRYPTED:', '');
-    const password = getEncryptionKey();
-
-    // Simple EVP_BytesToKey equivalent for createDecipher compatibility
-    const md5_1 = crypto.createHash('md5').update(password).digest();
-    const md5_2 = crypto.createHash('md5').update(md5_1).update(password).digest();
-    const md5_3 = crypto.createHash('md5').update(md5_2).update(password).digest();
-
-    const key = Buffer.concat([md5_1, md5_2]); // 32 bytes for AES-256
-    const iv = md5_3; // 16 bytes for CBC
-
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    decipher.setAutoPadding(true);
-
-    let decrypted = decipher.update(encrypted, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-
-    return decrypted;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error("Legacy decryption also failed: " + errorMessage);
   }
 }
 

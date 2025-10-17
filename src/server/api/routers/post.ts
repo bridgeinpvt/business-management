@@ -11,7 +11,7 @@ export const postRouter = createTRPCRouter({
       includeReplies: z.boolean().optional().default(true),
       limit: z.number().min(1).max(100).optional().default(10),
       cursor: z.string().optional() // for cursor-based pagination
-    }).optional().default({}))
+    }).optional().default(() => ({ sortBy: "recent" as const, includeReplies: true, limit: 10 })))
     .query(async ({ ctx, input = {} }) => {
       const { sortBy = "recent", limit = 10, cursor } = input;
       

@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Building2, MapPin, CreditCard, Package, ShoppingBag, AlertCircle } from "lucide-react";
+import Image from "next/image";
 
 interface BusinessData {
   name?: string;
@@ -207,9 +208,11 @@ export function ReviewStep({ businessData, categories, products }: ReviewStepPro
                 <div key={index} className="flex items-center gap-3 p-3 border rounded">
                   <div className="w-12 h-12 bg-gray-100 rounded">
                     {product.images.length > 0 ? (
-                      <img
+                      <Image
                         src={product.images[0]}
                         alt={product.name}
+                        width={300}
+                        height={300}
                         className="w-full h-full object-cover rounded"
                       />
                     ) : (

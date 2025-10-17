@@ -1,13 +1,14 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { generateOrderNumber } from "@/lib/utils";
+import { OrderStatus, type Prisma } from "@prisma/client";
 
 const createOrderSchema = z.object({
   businessId: z.string(),
   items: z.array(z.object({
     productId: z.string(),
     quantity: z.number().min(1, "Quantity must be at least 1"),
-    variant: z.record(z.string()).optional(),
+    variant: z.record(z.string(), z.string()).optional(),
     notes: z.string().optional(),
   })).min(1, "Order must have at least one item"),
   shippingAddress: z.object({
@@ -361,7 +362,7 @@ export const orderRouter = createTRPCRouter({
         throw new Error("Access denied");
       }
 
-      const updateData: any = {
+      const updateData: Prisma.OrderUpdateInput = {
         status: input.status,
         updatedAt: new Date(),
       };
@@ -565,5 +566,63 @@ export const orderRouter = createTRPCRouter({
         ordersByStatus,
         dailyData,
       };
+    }),
+
+  // Get orders by business ID
+  getByBusinessId: protectedProcedure
+    .input(z.object({
+      businessId: z.string(),
+      status: z.string().optional(),
+      limit: z.number().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { businessId, status, limit } = input;
+
+      const where: Prisma.OrderWhereInput = { businessId };
+      if (status && status !== 'ALL') {
+        where.status = status as OrderStatus;
+      }
+
+      const orders = await ctx.db.order.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          items: {
+            include: {
+              product: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit || 100,
+      });
+
+      return { orders };
+    }),
+
+  // Update order status
+  updateStatus: protectedProcedure
+    .input(z.object({
+      orderId: z.string(),
+      status: z.enum(['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { orderId, status } = input;
+
+      const order = await ctx.db.order.update({
+        where: { id: orderId },
+        data: { status },
+      });
+
+      return { success: true, order };
     }),
 });

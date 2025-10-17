@@ -2,8 +2,8 @@
 
 declare global {
   interface Window {
-    gtag: (command: string, targetId: string, config?: any) => void;
-    dataLayer: any[];
+    gtag: (command: string, targetId: string, config?: Record<string, unknown>) => void;
+    dataLayer: unknown[];
   }
 }
 
@@ -13,14 +13,14 @@ export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_TRACKING_ID;
 export const initializeGtag = () => {
   if (typeof window !== 'undefined' && !window.gtag) {
     window.dataLayer = window.dataLayer || [];
-    window.gtag = function() {
-      window.dataLayer.push(arguments);
+    window.gtag = function(...args: unknown[]) {
+      window.dataLayer.push(args);
     };
   }
 };
 
 // GA4 Recommended Events for Social Media App
-export const trackEvent = (eventName: string, parameters?: Record<string, any>) => {
+export const trackEvent = (eventName: string, parameters?: Record<string, unknown>) => {
   if (typeof window !== 'undefined' && window.gtag && GA_TRACKING_ID) {
     window.gtag('event', eventName, {
       ...parameters,
@@ -155,7 +155,7 @@ export const trackCampaign = (utmParams: Record<string, string | null>) => {
 };
 
 // Custom dimensions for user segmentation
-export const setUserProperties = (userId: string, properties: Record<string, any>) => {
+export const setUserProperties = (userId: string, properties: Record<string, unknown>) => {
   if (typeof window !== 'undefined' && window.gtag && GA_TRACKING_ID) {
     window.gtag('config', GA_TRACKING_ID, {
       user_id: userId,
@@ -191,7 +191,7 @@ export const trackSocialEcommerce = {
   }
 };
 
-export default {
+const analytics = {
   trackEvent,
   trackConversion,
   trackUserEngagement,
@@ -200,3 +200,5 @@ export default {
   trackUserSegment,
   trackSocialEcommerce
 };
+
+export default analytics;

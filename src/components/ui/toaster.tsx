@@ -20,19 +20,19 @@ const ToasterContext = createContext<ToasterContextType | undefined>(undefined);
 export function ToasterProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
   const addToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).substring(2);
     setToasts((prev) => [...prev, { ...toast, id }]);
-    
+
     // Auto remove after 5 seconds
     setTimeout(() => {
       removeToast(id);
     }, 5000);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
+  }, [removeToast]);
 
   return (
     <ToasterContext.Provider value={{ toasts, addToast, removeToast }}>

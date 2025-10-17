@@ -30,7 +30,7 @@ class EmailService {
   private async sendEmailWithTemplate(
     email: string,
     template: string,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<boolean> {
     try {
       // In development, log the email

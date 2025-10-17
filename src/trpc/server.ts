@@ -2,9 +2,6 @@ import "server-only";
 
 import { createCaller } from "@/server/api/root";
 
-import { type AppRouter } from "@/server/api/root";
-import { appRouter } from "@/server/api/root";
-import { createTRPCContext } from "@/server/api/trpc";
 import { db } from "@/server/db";
 import { headers } from "next/headers";
 import { getUserFromHeaders } from "@/lib/shared-auth-middleware";
@@ -19,7 +16,7 @@ import { getUserFromHeaders } from "@/lib/shared-auth-middleware";
  */
 const createContext = async () => {
   // Get user from headers for server-side calls
-  const headersList = headers();
+  const headersList = await headers();
   const user = getUserFromHeaders(headersList);
   return {
     user,

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X, ShoppingBag, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface Category {
   name: string;
@@ -191,9 +192,11 @@ export function ProductsStep({ products, onProductsChange, categories }: Product
                 <div className="grid grid-cols-4 gap-2 mb-3">
                   {newProduct.images.map((image, index) => (
                     <div key={index} className="relative">
-                      <img
+                      <Image
                         src={image}
                         alt={`Product ${index + 1}`}
+                        width={300}
+                        height={300}
                         className="w-full h-20 object-cover rounded border"
                       />
                       <Button
@@ -271,9 +274,11 @@ export function ProductsStep({ products, onProductsChange, categories }: Product
                   <div className="flex gap-3">
                     <div className="w-16 h-16 bg-gray-100 rounded border flex items-center justify-center">
                       {product.images.length > 0 ? (
-                        <img
+                        <Image
                           src={product.images[0]}
                           alt={product.name}
+                          width={300}
+                          height={300}
                           className="w-full h-full object-cover rounded"
                         />
                       ) : (

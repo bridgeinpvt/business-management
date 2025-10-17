@@ -1,5 +1,4 @@
 import { db } from "@/server/db";
-import type { User, WalletTopup } from "@prisma/client";
 import { createNotificationHelper } from "@/server/api/routers/notification";
 
 export interface WalletService {

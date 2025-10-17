@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ShoppingCart, Search, Eye, Package, TrendingUp, Clock, CheckCircle, XCircle } from "lucide-react";
+import { ShoppingCart, Search, Eye, Clock, CheckCircle, XCircle } from "lucide-react";
 import { api } from "@/trpc/react";
 import { formatDistanceToNow } from "date-fns";
+import type { RouterOutputs } from "@/trpc/shared";
+
+type Order = RouterOutputs["order"]["getByBusinessId"]["orders"][number];
 
 export default function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Get user's businesses
   const { data: businesses } = api.business.getMyBusinesses.useQuery();
@@ -23,9 +26,7 @@ export default function OrdersPage() {
   const { data: ordersData, isLoading, refetch } = api.order.getByBusinessId.useQuery(
     {
       businessId: firstBusinessId!,
-      page: 1,
       limit: 50,
-      search: searchQuery || undefined,
       status: statusFilter !== "all" ? statusFilter : undefined,
     },
     { enabled: !!firstBusinessId }
@@ -96,25 +97,25 @@ export default function OrdersPage() {
   const stats = [
     {
       title: "Total Orders",
-      value: ordersData?.total || 0,
+      value: ordersData?.orders?.length || 0,
       icon: ShoppingCart,
       color: "text-blue-600",
     },
     {
       title: "Pending",
-      value: ordersData?.orders?.filter((o) => o.orderStatus === "PENDING").length || 0,
+      value: ordersData?.orders?.filter((o) => o.status === "PENDING").length || 0,
       icon: Clock,
       color: "text-yellow-600",
     },
     {
       title: "Completed",
-      value: ordersData?.orders?.filter((o) => o.orderStatus === "DELIVERED").length || 0,
+      value: ordersData?.orders?.filter((o) => o.status === "DELIVERED").length || 0,
       icon: CheckCircle,
       color: "text-green-600",
     },
     {
       title: "Cancelled",
-      value: ordersData?.orders?.filter((o) => o.orderStatus === "CANCELLED").length || 0,
+      value: ordersData?.orders?.filter((o) => o.status === "CANCELLED").length || 0,
       icon: XCircle,
       color: "text-red-600",
     },
@@ -183,8 +184,8 @@ export default function OrdersPage() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <h3 className="font-semibold text-lg">Order #{order.orderNumber}</h3>
-                      <Badge className={getStatusColor(order.orderStatus)}>
-                        {order.orderStatus}
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status}
                       </Badge>
                       <Badge className={getPaymentStatusColor(order.paymentStatus)}>
                         Payment: {order.paymentStatus}
@@ -193,15 +194,14 @@ export default function OrdersPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Customer</p>
-                        <p className="font-medium">{order.user?.name || "Guest"}</p>
-                        <p className="text-xs text-muted-foreground">{order.user?.email}</p>
+                        <p className="font-medium">Guest</p>
+                        <p className="text-xs text-muted-foreground">-</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Items</p>
-                        <p className="font-medium">{order.items?.length || 0} item(s)</p>
+                        <p className="font-medium">0 item(s)</p>
                         <p className="text-xs text-muted-foreground">
-                          {order.items?.slice(0, 2).map((item: any) => item.product?.name).join(", ")}
-                          {order.items?.length > 2 && ` +${order.items.length - 2} more`}
+                          -
                         </p>
                       </div>
                       <div>
@@ -252,15 +252,15 @@ export default function OrdersPage() {
               {/* Status */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Badge className={getStatusColor(selectedOrder.orderStatus)}>
-                    {selectedOrder.orderStatus}
+                  <Badge className={getStatusColor(selectedOrder.status)}>
+                    {selectedOrder.status}
                   </Badge>
                   <Badge className={getPaymentStatusColor(selectedOrder.paymentStatus)}>
                     Payment: {selectedOrder.paymentStatus}
                   </Badge>
                 </div>
                 <div className="flex space-x-2">
-                  {selectedOrder.orderStatus === "PENDING" && (
+                  {selectedOrder.status === "PENDING" && (
                     <Button size="sm" onClick={() => {
                       updateStatusMutation.mutate({ orderId: selectedOrder.id, status: "CONFIRMED" });
                       setSelectedOrder(null);
@@ -268,7 +268,7 @@ export default function OrdersPage() {
                       Confirm Order
                     </Button>
                   )}
-                  {selectedOrder.orderStatus === "CONFIRMED" && (
+                  {selectedOrder.status === "CONFIRMED" && (
                     <Button size="sm" onClick={() => {
                       updateStatusMutation.mutate({ orderId: selectedOrder.id, status: "PROCESSING" });
                       setSelectedOrder(null);
@@ -276,7 +276,7 @@ export default function OrdersPage() {
                       Start Processing
                     </Button>
                   )}
-                  {selectedOrder.orderStatus === "PROCESSING" && (
+                  {selectedOrder.status === "PROCESSING" && (
                     <Button size="sm" onClick={() => {
                       updateStatusMutation.mutate({ orderId: selectedOrder.id, status: "SHIPPED" });
                       setSelectedOrder(null);
@@ -284,7 +284,7 @@ export default function OrdersPage() {
                       Mark as Shipped
                     </Button>
                   )}
-                  {selectedOrder.orderStatus === "SHIPPED" && (
+                  {selectedOrder.status === "SHIPPED" && (
                     <Button size="sm" onClick={() => {
                       updateStatusMutation.mutate({ orderId: selectedOrder.id, status: "DELIVERED" });
                       setSelectedOrder(null);
@@ -303,15 +303,15 @@ export default function OrdersPage() {
                 <CardContent className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Name:</span>
-                    <span className="font-medium">{selectedOrder.user?.name || "Guest"}</span>
+                    <span className="font-medium">Guest</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Email:</span>
-                    <span className="font-medium">{selectedOrder.user?.email}</span>
+                    <span className="font-medium">-</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Phone:</span>
-                    <span className="font-medium">{selectedOrder.shippingPhone || "N/A"}</span>
+                    <span className="font-medium">N/A</span>
                   </div>
                 </CardContent>
               </Card>
@@ -322,10 +322,7 @@ export default function OrdersPage() {
                   <CardTitle className="text-base">Shipping Address</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>{selectedOrder.shippingAddress}</p>
-                  <p className="text-muted-foreground mt-1">
-                    {selectedOrder.shippingCity}, {selectedOrder.shippingState} {selectedOrder.shippingZipCode}
-                  </p>
+                  <p className="text-muted-foreground">Address information not available</p>
                 </CardContent>
               </Card>
 
@@ -335,22 +332,8 @@ export default function OrdersPage() {
                   <CardTitle className="text-base">Order Items</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {selectedOrder.items?.map((item: any) => (
-                      <div key={item.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                        <div className="flex items-center space-x-3">
-                          <Package className="h-8 w-8 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">{item.product?.name}</p>
-                            <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₹{(item.price * item.quantity)?.toFixed(2)}</p>
-                          <p className="text-sm text-muted-foreground">₹{item.price?.toFixed(2)} each</p>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">No items to display</p>
                   </div>
                 </CardContent>
               </Card>

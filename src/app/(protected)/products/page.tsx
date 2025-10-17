@@ -10,10 +10,13 @@ import { Package, Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import type { RouterOutputs } from "@/trpc/shared";
+
+type Product = RouterOutputs["product"]["getByBusinessId"]["products"][number];
 
 export default function ProductsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
@@ -116,7 +119,7 @@ export default function ProductsPage() {
     );
   }
 
-  const ProductForm = ({ product }: { product?: any }) => (
+  const ProductForm = ({ product }: { product?: Product }) => (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">

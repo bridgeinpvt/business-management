@@ -83,7 +83,7 @@ export class UPIService {
         transactionNote: params.get("tn") || undefined,
         transactionRef: params.get("tr") || undefined,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -142,7 +142,7 @@ export class PaymentReconciliationService {
   // Check if transaction matches pending wallet top-up
   static async matchTransactionToTopup(
     transactionData: BankTransactionData
-  ): Promise<{ topup: any; isMatch: boolean }> {
+  ): Promise<{ topup: unknown; isMatch: boolean }> {
     try {
       const { db } = await import("@/server/db");
       

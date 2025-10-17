@@ -9,7 +9,7 @@ export const userRouter = createTRPCRouter({
     .input(z.object({
       search: z.string().optional(),
       limit: z.number().min(1).max(50).optional().default(20)
-    }).optional().default({}))
+    }).optional().default(() => ({ limit: 20 })))
     .query(async ({ ctx, input = {} }) => {
       const { search, limit = 20 } = input;
       
@@ -109,7 +109,7 @@ export const userRouter = createTRPCRouter({
       let socialPlatforms = {};
       try {
         socialPlatforms = user.socialPlatforms ? JSON.parse(user.socialPlatforms) : {};
-      } catch (e) {
+      } catch {
         socialPlatforms = {};
       }
 
@@ -171,7 +171,7 @@ export const userRouter = createTRPCRouter({
       let socialPlatforms = {};
       try {
         socialPlatforms = user.socialPlatforms ? JSON.parse(user.socialPlatforms) : {};
-      } catch (e) {
+      } catch {
         socialPlatforms = {};
       }
 
@@ -235,7 +235,7 @@ export const userRouter = createTRPCRouter({
       if (input.socialPlatforms) {
         try {
           JSON.parse(input.socialPlatforms);
-        } catch (e) {
+        } catch (_e) {
           throw new Error("Invalid social platforms format. Must be valid JSON.");
         }
       }
@@ -252,8 +252,8 @@ export const userRouter = createTRPCRouter({
       }
 
       // Prepare update data
-      const updateData: Record<string, any> = {};
-      
+      const updateData: Record<string, unknown> = {};
+
       // Basic fields
       const basicFields = ['name', 'bio', 'username', 'image', 'banner', 'location', 'isOnboarded', 'userRole'];
       basicFields.forEach(field => {
@@ -322,7 +322,7 @@ export const userRouter = createTRPCRouter({
         let socialPlatforms = {};
         try {
           socialPlatforms = user.socialPlatforms ? JSON.parse(user.socialPlatforms) : {};
-        } catch (e) {
+        } catch (_e) {
           socialPlatforms = {};
         }
 
@@ -582,7 +582,7 @@ export const userRouter = createTRPCRouter({
         },
       });
 
-      return followers.map((f: any) => f.follower);
+      return followers.map((f) => f.follower);
     }),
 
   // Get current user's following (private)
@@ -610,7 +610,7 @@ export const userRouter = createTRPCRouter({
         },
       });
 
-      return following.map((f: any) => f.following);
+      return following.map((f) => f.following);
     }),
 
   // Delete user account
@@ -655,7 +655,7 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
       
-      const notification = await ctx.db.notification.updateMany({
+      await ctx.db.notification.updateMany({
         where: {
           id: input.notificationId,
           userId
@@ -712,7 +712,7 @@ export const userRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
-      const { purchaseId, status, rating, feedback, issueDescription } = input;
+      const { purchaseId, status, rating } = input;
 
       // Verify the purchase belongs to the user
       const purchase = await ctx.db.capsulePurchase.findFirst({
@@ -806,8 +806,8 @@ export const userRouter = createTRPCRouter({
           try {
             // Simple email notification (in production, you'd use your email service)
             logger.log(`[Email] Would send issue notification to creator ${purchase.capsule.creator.email}`);
-          } catch (error) {
-            logger.error("Failed to send issue notification email:", error);
+          } catch (emailError) {
+            logger.error("Failed to send issue notification email:", emailError);
           }
         }
 
@@ -822,8 +822,8 @@ export const userRouter = createTRPCRouter({
           rating
         };
 
-      } catch (error) {
-        logger.error("[Asset Acknowledgment] Failed to process acknowledgment:", error);
+      } catch (ackError) {
+        logger.error("[Asset Acknowledgment] Failed to process acknowledgment:", ackError);
         throw new Error("Failed to submit acknowledgment");
       }
     }),

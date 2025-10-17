@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authMiddleware } from "@/lib/shared-auth-middleware";
+import { urls } from "@/lib/urls";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -27,7 +28,7 @@ export async function middleware(request: NextRequest) {
   if (authTokenFromUrl && !pathname.startsWith("/api")) {
     // Validate token with auth service
     try {
-      const response = await fetch(`http://localhost:3001/api/validate`, {
+      const response = await fetch(`${urls.AUTH_URL}/api/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: authTokenFromUrl }),
@@ -85,7 +86,7 @@ export async function middleware(request: NextRequest) {
 
     // Validate token with auth service
     try {
-      const response = await fetch(`http://localhost:3001/api/validate`, {
+      const response = await fetch(`${urls.AUTH_URL}/api/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: authToken }),
@@ -119,9 +120,9 @@ export async function middleware(request: NextRequest) {
 
   // For page routes, use full auth middleware with redirects
   return authMiddleware(request, {
-    authDomain: "localhost:3001",
-    currentDomain: "localhost:3004",
-    cookieDomain: "localhost",
+    authDomain: urls.AUTH_DOMAIN,
+    currentDomain: urls.BUSINESS_DOMAIN,
+    cookieDomain: urls.COOKIE_DOMAIN,
     publicPaths: [],
   });
 }

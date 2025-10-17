@@ -64,7 +64,13 @@ export const exploreRouter = createTRPCRouter({
     }))
     .query(async ({ ctx, input }) => {
       const { query, type } = input;
-      const results: any = {
+      type ResultsType = {
+        users: unknown[];
+        posts: unknown[];
+        capsules: unknown[];
+        news: unknown[];
+      };
+      const results: ResultsType = {
         users: [],
         posts: [],
         capsules: [],

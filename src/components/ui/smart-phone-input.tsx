@@ -126,7 +126,7 @@ export function SmartPhoneInput({
     if (initialCountryCode !== countryCode) {
       setCountryCode(initialCountryCode);
     }
-  }, [initialCountryCode]);
+  }, [initialCountryCode, countryCode]);
 
   // Update input value when external value changes
   useEffect(() => {

@@ -25,8 +25,14 @@ export const capsuleRouter = createTRPCRouter({
     }))
     .query(async ({ ctx, input }) => {
       const { search, category, sortBy, limit, cursor } = input;
-      
-      const whereClause: any = {
+
+      type WhereClause = {
+        isActive: boolean;
+        OR?: Array<{ name: { contains: string; mode: "insensitive" } } | { description: { contains: string; mode: "insensitive" } }>;
+        type?: typeof category;
+      };
+
+      const whereClause: WhereClause = {
         isActive: true,
         ...(search && {
           OR: [
@@ -36,14 +42,15 @@ export const capsuleRouter = createTRPCRouter({
         }),
         ...(category && { type: category }),
       };
-      
-      const orderByClause: any = {
-        newest: { createdAt: "desc" },
-        popular: { createdAt: "desc" }, // Could be based on order count
-        rating: { rating: "desc" },
-        price_low: { price: "asc" },
-        price_high: { price: "desc" },
-      }[sortBy];
+
+      const orderByOptions: Record<string, Record<string, "asc" | "desc">> = {
+        newest: { createdAt: "desc" as const },
+        popular: { createdAt: "desc" as const }, // Could be based on order count
+        rating: { rating: "desc" as const },
+        price_low: { price: "asc" as const },
+        price_high: { price: "desc" as const },
+      };
+      const orderByClause = orderByOptions[sortBy];
 
       const capsules = await ctx.db.capsule.findMany({
         where: whereClause,

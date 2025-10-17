@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface FileUploadProps {
   onUploadComplete?: (fileUrl: string, fileId: string) => void;
@@ -118,9 +119,11 @@ export function FileUpload({
         >
           {preview ? (
             <>
-              <img 
-                src={preview} 
-                alt="Profile" 
+              <Image
+                src={preview}
+                alt="Profile"
+                width={500}
+                height={500}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -191,9 +194,11 @@ export function FileUpload({
         >
           {preview ? (
             <div className="space-y-4">
-              <img 
-                src={preview} 
-                alt="Preview" 
+              <Image
+                src={preview}
+                alt="Preview"
+                width={800}
+                height={600}
                 className="max-h-48 max-w-full mx-auto rounded-lg"
               />
               <p className="text-sm text-muted-foreground">Click to change image</p>
@@ -267,9 +272,11 @@ export function FileUpload({
 
       {preview && (
         <div className="relative">
-          <img 
-            src={preview} 
-            alt="Preview" 
+          <Image
+            src={preview}
+            alt="Preview"
+            width={800}
+            height={600}
             className="max-h-32 max-w-full mx-auto rounded-lg"
           />
           <Button

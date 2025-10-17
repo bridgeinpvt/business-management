@@ -7,7 +7,7 @@ import { db } from "@/server/db";
 import { getUserFromHeaders } from "@/lib/shared-auth-middleware";
 
 type CreateContextOptions = {
-  user: { id: string; email: string; name?: string; } | null;
+  user: { id: string; email: string; name?: string; userRole?: string; } | null;
 };
 
 const createInnerTRPCContext = (opts: CreateContextOptions) => {

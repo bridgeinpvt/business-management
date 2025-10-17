@@ -4,15 +4,17 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Users, Search, Mail, Phone, MapPin, ShoppingCart, TrendingUp, User } from "lucide-react";
+import { Users, Search, Phone, ShoppingCart, TrendingUp, User } from "lucide-react";
 import { api } from "@/trpc/react";
 import { formatDistanceToNow } from "date-fns";
+import type { RouterOutputs } from "@/trpc/shared";
+
+type Customer = RouterOutputs["customer"]["getByBusinessId"]["customers"][number];
 
 export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   // Get user's businesses
   const { data: businesses } = api.business.getMyBusinesses.useQuery();
@@ -69,7 +71,7 @@ export default function CustomersPage() {
     },
     {
       title: "Active Customers",
-      value: customersData?.customers?.filter((c) => c.totalOrders > 0).length || 0,
+      value: customersData?.customers?.filter((c) => c.isActive).length || 0,
       icon: ShoppingCart,
       color: "text-purple-600",
     },
@@ -126,33 +128,27 @@ export default function CustomersPage() {
                       <User className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{customer.name}</CardTitle>
-                      <CardDescription className="text-sm">{customer.email}</CardDescription>
+                      <CardTitle className="text-lg">{customer.user.name || 'N/A'}</CardTitle>
+                      <CardDescription className="text-sm">{customer.user.email || 'N/A'}</CardDescription>
                     </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {customer.phone && (
+                {customer.user.phone && (
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Phone className="h-4 w-4 mr-2" />
-                    <span>{customer.phone}</span>
-                  </div>
-                )}
-                {customer.address && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    <span className="truncate">{customer.address}</span>
+                    <span>{customer.user.phone}</span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between pt-3 border-t">
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{customer.totalOrders || 0}</p>
+                    <p className="text-2xl font-bold">0</p>
                     <p className="text-xs text-muted-foreground">Orders</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">₹{customer.totalSpent?.toFixed(0) || 0}</p>
+                    <p className="text-2xl font-bold">₹0</p>
                     <p className="text-xs text-muted-foreground">Total Spent</p>
                   </div>
                 </div>
@@ -197,27 +193,14 @@ export default function CustomersPage() {
                       <User className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xl font-semibold">{selectedCustomer.name}</p>
-                      <p className="text-sm text-muted-foreground">{selectedCustomer.email}</p>
+                      <p className="text-xl font-semibold">{selectedCustomer.user.name || 'N/A'}</p>
+                      <p className="text-sm text-muted-foreground">{selectedCustomer.user.email || 'N/A'}</p>
                     </div>
                   </div>
-                  {selectedCustomer.phone && (
+                  {selectedCustomer.user.phone && (
                     <div className="flex items-center space-x-2 pt-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedCustomer.phone}</span>
-                    </div>
-                  )}
-                  {selectedCustomer.address && (
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-                      <div>
-                        <p>{selectedCustomer.address}</p>
-                        {selectedCustomer.city && (
-                          <p className="text-sm text-muted-foreground">
-                            {selectedCustomer.city}, {selectedCustomer.state} {selectedCustomer.zipCode}
-                          </p>
-                        )}
-                      </div>
+                      <span>{selectedCustomer.user.phone}</span>
                     </div>
                   )}
                 </CardContent>
@@ -227,21 +210,19 @@ export default function CustomersPage() {
               <div className="grid grid-cols-3 gap-4">
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-3xl font-bold">{selectedCustomer.totalOrders || 0}</p>
+                    <p className="text-3xl font-bold">0</p>
                     <p className="text-sm text-muted-foreground mt-1">Total Orders</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-3xl font-bold">₹{selectedCustomer.totalSpent?.toFixed(0) || 0}</p>
+                    <p className="text-3xl font-bold">₹0</p>
                     <p className="text-sm text-muted-foreground mt-1">Total Spent</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-3xl font-bold">
-                      ₹{selectedCustomer.totalOrders > 0 ? (selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(0) : 0}
-                    </p>
+                    <p className="text-3xl font-bold">₹0</p>
                     <p className="text-sm text-muted-foreground mt-1">Avg. Order Value</p>
                   </CardContent>
                 </Card>

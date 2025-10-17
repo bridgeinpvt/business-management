@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
 import { ShoppingCart, Eye } from "lucide-react";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import Link from "next/link";
 
 interface RecentOrdersProps {
@@ -84,7 +84,7 @@ export function RecentOrders({ businessId }: RecentOrdersProps) {
                     <div>
                       Items: {order.items.map(item => item.product.name).join(", ")}
                     </div>
-                    <div>{formatDateTime(new Date(order.createdAt))}</div>
+                    <div>{formatDate(new Date(order.createdAt))}</div>
                   </div>
                 </div>
 

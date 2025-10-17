@@ -16,7 +16,7 @@ export function generateReferralCode(userId: string): string {
  * @param referralCode The code to check
  * @returns Promise<boolean> True if the code is unique
  */
-export async function isReferralCodeUnique(db: any, referralCode: string): Promise<boolean> {
+export async function isReferralCodeUnique(db: { user: { findUnique: (args: { where: { referralCode: string } }) => Promise<unknown> } }, referralCode: string): Promise<boolean> {
   const existing = await db.user.findUnique({
     where: { referralCode }
   });
@@ -29,7 +29,7 @@ export async function isReferralCodeUnique(db: any, referralCode: string): Promi
  * @param userId The user's ID
  * @returns Promise<string> A unique referral code
  */
-export async function generateUniqueReferralCode(db: any, userId: string): Promise<string> {
+export async function generateUniqueReferralCode(db: { user: { findUnique: (args: { where: { referralCode: string } }) => Promise<unknown> } }, userId: string): Promise<string> {
   let referralCode: string;
   let isUnique = false;
   

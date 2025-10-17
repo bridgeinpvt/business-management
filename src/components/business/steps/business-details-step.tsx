@@ -1,18 +1,18 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, ControllerRenderProps, FieldValues } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Upload, Image as ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 interface BusinessDetailsStepProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FieldValues>;
 }
 
 export function BusinessDetailsStep({ form }: BusinessDetailsStepProps) {
-  const handleImageUpload = (field: any, type: 'logo' | 'cover') => {
+  const handleImageUpload = (field: ControllerRenderProps<FieldValues, string>, type: 'logo' | 'cover') => {
     // TODO: Implement image upload logic
     // For now, just set a placeholder URL
     const placeholderUrl = type === 'logo'
@@ -42,9 +42,11 @@ export function BusinessDetailsStep({ form }: BusinessDetailsStepProps) {
                 <div className="flex items-center space-x-4">
                   <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-800">
                     {field.value ? (
-                      <img
+                      <Image
                         src={field.value}
                         alt="Logo preview"
+                        width={80}
+                        height={80}
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
@@ -81,9 +83,11 @@ export function BusinessDetailsStep({ form }: BusinessDetailsStepProps) {
                 <div className="space-y-4">
                   <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-800">
                     {field.value ? (
-                      <img
+                      <Image
                         src={field.value}
                         alt="Cover preview"
+                        width={800}
+                        height={300}
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
