@@ -1,0 +1,27 @@
+name: Deploy Business Management to VPS (Develop)
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USERNAME }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: |
+            export PATH=/root/.nvm/versions/node/v21.7.3/bin:$PATH
+            cd /home/ubuntu/develop/business-management
+            git pull origin develop
+            npm install
+            cd ../data-hub
+            npm install
+            npm run db:generate
+            cd ../business-management
+            npm run build
+            pm2 restart business-dev || pm2 start npm --name "business-dev" -- start -- -p 4004
