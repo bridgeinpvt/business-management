@@ -2,7 +2,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, Users, ShoppingCart, TrendingUp, Store, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Package, Users, CreditCard, TrendingUp, Store, Plus } from "lucide-react";
+import { StatCard } from "@/components/ui/stat-card";
+import { RevenueChart } from "@/components/dashboard/revenue-chart";
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 
@@ -14,51 +16,25 @@ export default function DashboardPage() {
 
   // Get analytics for first business if exists
   const firstBusinessId = businesses?.[0]?.id;
-  const { data: analytics, isLoading: analyticsLoading } = api.business.getAnalytics.useQuery(
+  const { data: dashboardStats, isLoading: statsLoading } = api.business.getDashboardStats.useQuery(
+    { businessId: firstBusinessId! },
+    { enabled: !!firstBusinessId }
+  );
+
+  const { data: revenueGrowth, isLoading: revenueLoading } = api.business.getRevenueGrowth.useQuery(
+    { businessId: firstBusinessId!, months: 6 },
+    { enabled: !!firstBusinessId }
+  );
+
+  const { data: analytics } = api.business.getAnalytics.useQuery(
     { businessId: firstBusinessId!, days: 30 },
     { enabled: !!firstBusinessId }
   );
 
-  // Calculate percentage changes (mock data for now, can be enhanced)
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: `₹${analytics?.revenue?.toFixed(2) || 0}`,
-      description: "Last 30 days",
-      icon: TrendingUp,
-      change: "+12.5%",
-      isPositive: true,
-    },
-    {
-      title: "Orders",
-      value: analytics?.orders || 0,
-      description: "Total orders placed",
-      icon: ShoppingCart,
-      change: "+8.2%",
-      isPositive: true,
-    },
-    {
-      title: "Products",
-      value: analytics?.products || 0,
-      description: "Active products",
-      icon: Package,
-      change: "+3 new",
-      isPositive: true,
-    },
-    {
-      title: "Customers",
-      value: analytics?.customers || 0,
-      description: "Total customers",
-      icon: Users,
-      change: "+5.1%",
-      isPositive: true,
-    },
-  ];
-
-  if (businessesLoading || analyticsLoading) {
+  if (businessesLoading || statsLoading || revenueLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
     );
   }
@@ -69,11 +45,11 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="text-center py-12">
           <Store className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Welcome to Nocage Business!</h2>
+          <h2 className="text-2xl font-bold mb-2">Welcome to Business Management!</h2>
           <p className="text-muted-foreground mb-6">
             Get started by creating your first business
           </p>
-          <Button onClick={() => router.push("/business")}>
+          <Button onClick={() => router.push("/create-business")} className="bg-purple-600 hover:bg-purple-700">
             <Store className="mr-2 h-4 w-4" />
             Create Your Business
           </Button>
@@ -82,6 +58,16 @@ export default function DashboardPage() {
     );
   }
 
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -89,59 +75,76 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here&apos;s an overview of your business.</p>
         </div>
-        <Button onClick={() => router.push("/business")}>
-          <Store className="mr-2 h-4 w-4" />
-          View Business
+        <Button onClick={() => router.push("/products")} className="bg-purple-600 hover:bg-purple-700">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Product
         </Button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center text-xs mt-1">
-                <span className="text-muted-foreground">{stat.description}</span>
-                <span className={`ml-2 flex items-center ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {stat.isPositive ? (
-                    <ArrowUpRight className="h-3 w-3 mr-1" />
-                  ) : (
-                    <ArrowDownRight className="h-3 w-3 mr-1" />
-                  )}
-                  {stat.change}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <StatCard
+          title="Revenue"
+          value={formatCurrency(dashboardStats?.revenue?.value || 0)}
+          icon={TrendingUp}
+          description="Last 30 days"
+          trend={{
+            value: dashboardStats?.revenue?.growth || 0,
+            isPositive: (dashboardStats?.revenue?.growth || 0) >= 0,
+          }}
+        />
+        <StatCard
+          title="Products"
+          value={dashboardStats?.products?.value || 0}
+          icon={Package}
+          description="Active products"
+        />
+        <StatCard
+          title="Customers"
+          value={dashboardStats?.customers?.value || 0}
+          icon={Users}
+          description={`${dashboardStats?.customers?.new || 0} new this month`}
+        />
+        <StatCard
+          title="Conversion Rate"
+          value={`${(dashboardStats?.conversionRate?.value || 0).toFixed(2)}%`}
+          icon={CreditCard}
+          description="View to purchase"
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Orders */}
-        <Card>
+      {/* Revenue Chart */}
+      {revenueGrowth && revenueGrowth.length > 0 && (
+        <RevenueChart data={revenueGrowth} />
+      )}
+
+      {/* Recent Activity and Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Activity - Takes 2 columns */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-            <CardDescription>Latest orders from your customers</CardDescription>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>Latest orders and updates</CardDescription>
           </CardHeader>
           <CardContent>
             {analytics?.recentOrders && analytics.recentOrders.length > 0 ? (
               <div className="space-y-4">
-                {analytics.recentOrders.slice(0, 5).map((order) => (
-                  <div key={order.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                    <div>
-                      <p className="font-medium">{order.user?.name || "Guest"}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {order.items.length} item(s)
-                      </p>
+                {analytics.recentOrders.slice(0, 6).map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-purple-50 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                        <CreditCard className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{order.user?.name || "Guest"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.items.length} item(s) • {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">₹{order.finalAmount?.toFixed(2)}</p>
-                      <p className={`text-xs ${
+                      <p className="font-semibold">{formatCurrency(order.finalAmount || 0)}</p>
+                      <p className={`text-xs font-medium ${
                         order.status === 'DELIVERED' ? 'text-green-600' :
                         order.status === 'CANCELLED' ? 'text-red-600' :
                         'text-yellow-600'
@@ -151,80 +154,60 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ))}
-                <Button variant="outline" className="w-full" onClick={() => router.push("/orders")}>
-                  View All Orders
-                </Button>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">No orders yet</p>
+              <div className="text-center py-12">
+                <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">No recent activity</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Top Products */}
+        {/* Quick Actions - Takes 1 column */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Products</CardTitle>
-            <CardDescription>Best selling products</CardDescription>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Manage your business</CardDescription>
           </CardHeader>
           <CardContent>
-            {analytics?.topProducts && analytics.topProducts.length > 0 ? (
-              <div className="space-y-4">
-                {analytics.topProducts.map((product, index) => (
-                  <div key={product.id} className="flex items-center space-x-4 border-b pb-3 last:border-0">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{product.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {product.totalSales || 0} sold
-                      </p>
-                    </div>
-                    <div className="font-semibold">₹{product.price?.toFixed(2)}</div>
-                  </div>
-                ))}
-                <Button variant="outline" className="w-full" onClick={() => router.push("/products")}>
-                  View All Products
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground mb-4">No products yet</p>
-                <Button onClick={() => router.push("/products")}>Add Your First Product</Button>
-              </div>
-            )}
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-purple-50"
+                onClick={() => router.push("/products")}
+              >
+                <Package className="h-4 w-4 mr-2" />
+                <span>Add Product</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-purple-50"
+                onClick={() => router.push("/customers")}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                <span>View Customers</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-purple-50"
+                onClick={() => router.push("/checkout-links")}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Create Checkout Link</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-purple-50"
+                onClick={() => router.push("/tracking-links")}
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                <span>Create Tracking Link</span>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks to manage your business</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-auto py-4 flex-col" onClick={() => router.push("/products")}>
-              <Package className="h-6 w-6 mb-2" />
-              <span>Add Product</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col" onClick={() => router.push("/orders")}>
-              <ShoppingCart className="h-6 w-6 mb-2" />
-              <span>View Orders</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col" onClick={() => router.push("/customers")}>
-              <Users className="h-6 w-6 mb-2" />
-              <span>Manage Customers</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

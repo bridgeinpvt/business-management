@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,13 +8,12 @@ import { signOut } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Building2,
   Users,
   Package,
-  Bell,
+  CreditCard,
+  Link2,
+  ExternalLink,
   Settings,
-  PanelRightOpen,
-  PanelLeftOpen,
   LogOut,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -22,21 +21,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/react";
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "My Business", href: "/business", icon: Building2 },
-  { name: "Employees", href: "/employees", icon: Users },
+const mainNavigation = [
+  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Products", href: "/products", icon: Package },
-  { name: "Notifications", href: "/notifications", icon: Bell },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Users", href: "/customers", icon: Users },
+  { name: "Checkout Links", href: "/checkout-links", icon: ExternalLink },
+  { name: "Payments", href: "/payments", icon: CreditCard },
+  { name: "Tracking Links", href: "/tracking-links", icon: Link2 },
 ];
 
 interface SidebarProps {
   className?: string;
-  onCollapseChange?: (isCollapsed: boolean) => void;
 }
 
-export function Sidebar({ className, onCollapseChange }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useAuth();
   const { data: currentUser } = api.user.getCurrentUser.useQuery(
@@ -44,160 +42,121 @@ export function Sidebar({ className, onCollapseChange }: SidebarProps) {
     { enabled: !!session?.user?.id }
   );
 
-  // Get unread notification counts
-  const { data: unreadNotificationCount } = api.user.getUnreadNotificationCount.useQuery(
+  // Get user's first business
+  const { data: businesses } = api.business.getMyBusinesses.useQuery(
     undefined,
-    {
-      enabled: !!session?.user?.id,
-      refetchInterval: 30000 // Refetch every 30 seconds
-    }
+    { enabled: !!session?.user?.id }
   );
 
-  const totalUnreadNotifications = unreadNotificationCount?.count || 0;
-
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  const handleCollapseToggle = () => {
-    const newCollapsedState = !isCollapsed;
-    setIsCollapsed(newCollapsedState);
-    onCollapseChange?.(newCollapsedState);
-  };
-
-  const handleLinkClick = () => {
-    // setIsCollapsed(true);
-    // onCollapseChange?.(true);
-  };
+  const currentBusiness = businesses?.[0];
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-16 h-[calc(100vh-4rem)] bg-background border-r border-border flex flex-col z-40",
-        isCollapsed ? "w-16" : "w-64",
+        "fixed left-0 top-16 h-[calc(100vh-4rem)] bg-background border-r border-border flex flex-col z-40 w-64",
         className
       )}
     >
-      <div className="p-4 flex-1">
-        <div className={cn(
-          "mb-4",
-          isCollapsed ? "flex justify-center" : "flex items-center justify-between"
-        )}>
-          {!isCollapsed && <span className="text-sm font-medium text-muted-foreground">Navigation</span>}
-          <button
-            onClick={handleCollapseToggle}
-            className={cn(
-              "flex items-center justify-end rounded-md hover:bg-muted",
-              isCollapsed ? "p-2 w-10 h-10" : "p-1"
-            )}
-          >
-            {isCollapsed ? (
-              <PanelLeftOpen size={20} className="text-muted-foreground" />
-            ) : (
-              <PanelRightOpen size={20} className="text-muted-foreground" />
-            )}
-          </button>
+      {/* Business Info - Top of Sidebar */}
+      {currentBusiness && (
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-10 w-10 rounded-lg">
+              <AvatarImage src={currentBusiness.logoUrl || undefined} />
+              <AvatarFallback className="text-sm rounded-lg bg-purple-100 text-purple-700">
+                {currentBusiness.name[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">
+                {currentBusiness.name}
+              </p>
+              <Badge
+                variant="secondary"
+                className="mt-1 bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs"
+              >
+                Pro Plan
+              </Badge>
+            </div>
+          </div>
         </div>
-        <nav className="space-y-1 py-4">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href;
+      )}
 
-            // Get unread count for specific items
-            let unreadCount = 0;
-            if (item.href === "/notifications") {
-              unreadCount = totalUnreadNotifications;
-            }
+      {/* Main Navigation */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <nav className="space-y-1">
+          {mainNavigation.map((item) => {
+            const isActive = pathname === item.href;
 
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={handleLinkClick}
                 className={cn(
-                  "flex items-center py-2 text-sm font-medium rounded-md relative",
+                  "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
                   isActive
-                    ? "bg-primary text-white"
-                    : "text-muted-foreground hover:text-white hover:bg-primary",
-                  isCollapsed ? "px-2 justify-center" : "px-3"
+                    ? "bg-purple-600 text-white"
+                    : "text-muted-foreground hover:text-foreground hover:bg-purple-50"
                 )}
-                title={isCollapsed ? item.name : undefined}
               >
-                <div className="flex items-center justify-center w-5 h-5">
-                  <item.icon className="h-5 w-5" />
-                </div>
-                {!isCollapsed && (
-                  <div className="flex items-center justify-between flex-1 ml-3">
-                    <span>{item.name}</span>
-                    {unreadCount > 0 && (
-                      <Badge
-                        className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 text-white"
-                        variant="destructive"
-                      >
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                {isCollapsed && unreadCount > 0 && (
-                  <Badge
-                    className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs bg-red-500 text-white border border-background"
-                    variant="destructive"
-                  >
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </Badge>
-                )}
+                <item.icon className="h-5 w-5 mr-3" />
+                <span>{item.name}</span>
               </Link>
             );
           })}
         </nav>
       </div>
 
-      {/* User Profile Section - Bottom of Sidebar */}
-      {session?.user && (
-        <div className="p-4 border-t border-border">
-          {!isCollapsed ? (
-            <div className="space-y-2">
-              {/* User Info */}
-              <div className="flex items-center space-x-3 p-2 rounded-lg">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={currentUser?.image || session.user.image || undefined} />
-                  <AvatarFallback className="text-xs">
-                    {currentUser?.name?.[0] || session.user.name?.[0] || session.user.email?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {currentUser?.name || session.user.name || session.user.email}
-                  </p>
-                  {currentUser?.username && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      @{currentUser.username}
-                    </p>
-                  )}
-                </div>
-              </div>
+      {/* Bottom Section - Settings & User */}
+      <div className="border-t border-border">
+        {/* Settings Link */}
+        <div className="p-4 pb-2">
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
+              pathname === "/settings"
+                ? "bg-purple-600 text-white"
+                : "text-muted-foreground hover:text-foreground hover:bg-purple-50"
+            )}
+          >
+            <Settings className="h-5 w-5 mr-3" />
+            <span>Settings</span>
+          </Link>
+        </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-1">
-                <Button variant="ghost" size="sm" onClick={() => signOut()} className="flex-1 hover:bg-primary hover:text-white">
-                  <LogOut className="h-4 w-4 mr-1" />
-                  Logout
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Avatar className="h-8 w-8 mx-auto">
+        {/* User Profile */}
+        {session?.user && (
+          <div className="p-4 pt-2">
+            <div className="flex items-center space-x-3 p-2 rounded-lg bg-muted/50">
+              <Avatar className="h-8 w-8">
                 <AvatarImage src={currentUser?.image || session.user.image || undefined} />
                 <AvatarFallback className="text-xs">
                   {currentUser?.name?.[0] || session.user.name?.[0] || session.user.email?.[0] || "U"}
                 </AvatarFallback>
               </Avatar>
-              <Button variant="ghost" size="sm" onClick={() => signOut()} className="w-full p-2 hover:bg-primary hover:text-white">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {currentUser?.name || session.user.name || session.user.email}
+                </p>
+                {currentUser?.username && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    @{currentUser.username}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="h-8 w-8 p-0 hover:bg-purple-100 hover:text-purple-700"
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

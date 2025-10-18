@@ -299,7 +299,7 @@ export const userRouter = createTRPCRouter({
   getCurrentUser: protectedProcedure
     .query(async ({ ctx }) => {
       const userId = ctx.user.id;
-      
+
       try {
         const user = await ctx.db.user.findUnique({
           where: { id: userId },
@@ -309,6 +309,7 @@ export const userRouter = createTRPCRouter({
                 posts: true,
                 capsules: true,
                 referredUsers: true,
+                ownedBusinesses: true,
               },
             },
           },
@@ -329,7 +330,11 @@ export const userRouter = createTRPCRouter({
         return {
           ...user,
           socialPlatforms,
-          counts: user._count,
+          counts: {
+            ...user._count,
+            // Alias for compatibility
+            businesses: user._count.ownedBusinesses,
+          },
         };
       } catch (error) {
         logger.error("Error fetching user:", error);

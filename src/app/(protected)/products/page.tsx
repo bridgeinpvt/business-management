@@ -6,10 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Package, Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
+import { Package, Plus, Edit, Trash2, Search, Eye, EyeOff, MoreHorizontal } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ColumnDef } from "@tanstack/react-table";
 import type { RouterOutputs } from "@/trpc/shared";
 
 type Product = RouterOutputs["product"]["getByBusinessId"]["products"][number];
@@ -19,6 +35,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   // Get user's businesses
   const { data: businesses } = api.business.getMyBusinesses.useQuery();
@@ -32,7 +49,14 @@ export default function ProductsPage() {
       limit: 50,
       search: searchQuery || undefined,
       status: statusFilter,
+      category: categoryFilter !== "all" ? categoryFilter : undefined,
     },
+    { enabled: !!firstBusinessId }
+  );
+
+  // Get categories
+  const { data: categories } = api.product.getCategories.useQuery(
+    { businessId: firstBusinessId! },
     { enabled: !!firstBusinessId }
   );
 
@@ -97,6 +121,144 @@ export default function ProductsPage() {
       createMutation.mutate(data);
     }
   };
+
+  // Table columns
+  const columns: ColumnDef<Product>[] = [
+    {
+      accessorKey: "image",
+      header: "Image",
+      cell: ({ row }) => {
+        const product = row.original;
+        const imageUrl = product.images?.[0];
+        return (
+          <Avatar className="h-10 w-10 rounded-md">
+            <AvatarImage src={imageUrl} alt={product.name} />
+            <AvatarFallback className="rounded-md bg-purple-100 text-purple-700">
+              {product.name[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        );
+      },
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <div>
+            <p className="font-medium">{product.name}</p>
+            {product.shortDescription && (
+              <p className="text-sm text-muted-foreground line-clamp-1">
+                {product.shortDescription}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <div>
+            <p className="font-semibold">₹{product.price?.toFixed(2)}</p>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <p className="text-xs text-muted-foreground line-through">
+                ₹{product.originalPrice?.toFixed(2)}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => {
+        const category = row.original.category;
+        return (
+          <Badge variant="outline" className="font-normal">
+            {category || "Uncategorized"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "isActive",
+      header: "Status",
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <Badge variant={product.isActive ? "default" : "secondary"} className={product.isActive ? "bg-green-600" : ""}>
+            {product.isActive ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "totalSales",
+      header: "Sales",
+      cell: ({ row }) => {
+        return <span className="font-medium">{row.original.totalSales || 0}</span>;
+      },
+    },
+    {
+      accessorKey: "views",
+      header: "Views",
+      cell: ({ row }) => {
+        return <span className="text-muted-foreground">{row.original.views || 0}</span>;
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEditingProduct(product)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toggleActiveMutation.mutate({ id: product.id })}>
+                {product.isActive ? (
+                  <>
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    Deactivate
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Activate
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => {
+                  if (confirm("Delete this product?")) {
+                    deleteMutation.mutate({ id: product.id });
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -175,9 +337,9 @@ export default function ProductsPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">
               <Plus className="mr-2 h-4 w-4" />
-              Add Product
+              Add New Product
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -191,80 +353,73 @@ export default function ProductsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories?.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2">
+              <Button
+                variant={statusFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("all")}
+                className={statusFilter === "all" ? "bg-purple-600 hover:bg-purple-700" : ""}
+              >
+                All
+              </Button>
+              <Button
+                variant={statusFilter === "active" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("active")}
+                className={statusFilter === "active" ? "bg-purple-600 hover:bg-purple-700" : ""}
+              >
+                Active
+              </Button>
+              <Button
+                variant={statusFilter === "inactive" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("inactive")}
+                className={statusFilter === "inactive" ? "bg-purple-600 hover:bg-purple-700" : ""}
+              >
+                Inactive
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant={statusFilter === "all" ? "default" : "outline"} size="sm" onClick={() => setStatusFilter("all")}>All</Button>
-          <Button variant={statusFilter === "active" ? "default" : "outline"} size="sm" onClick={() => setStatusFilter("active")}>Active</Button>
-          <Button variant={statusFilter === "inactive" ? "default" : "outline"} size="sm" onClick={() => setStatusFilter("inactive")}>Inactive</Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Products Grid */}
+      {/* Products Table */}
       {productsData?.products && productsData.products.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {productsData.products.map((product) => (
-            <Card key={product.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
-                    <CardDescription className="mt-1">{product.category || "Uncategorized"}</CardDescription>
-                  </div>
-                  <Badge variant={product.isActive ? "default" : "secondary"}>{product.isActive ? "Active" : "Inactive"}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {product.shortDescription && <p className="text-sm text-muted-foreground line-clamp-2">{product.shortDescription}</p>}
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-2xl font-bold">₹{product.price?.toFixed(2)}</span>
-                  {product.originalPrice && product.originalPrice > product.price && (
-                    <span className="text-sm text-muted-foreground line-through">₹{product.originalPrice?.toFixed(2)}</span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Stock: </span>
-                    <span className={product.inventory <= product.lowStockAlert ? "text-red-600 font-semibold" : "font-semibold"}>{product.inventory}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Sold: </span>
-                    <span className="font-semibold">{product.totalSales || 0}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="ghost" onClick={() => setEditingProduct(product)}><Edit className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleActiveMutation.mutate({ id: product.id })}>
-                      {product.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this product?")) deleteMutation.mutate({ id: product.id }); }}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                  <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DataTable columns={columns} data={productsData.products} pageSize={10} />
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Package className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">No Products Yet</h3>
             <p className="text-muted-foreground mb-6 text-center">Start adding products to your business catalog</p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-purple-600 hover:bg-purple-700">
               <Plus className="mr-2 h-4 w-4" />
               Add Your First Product
             </Button>

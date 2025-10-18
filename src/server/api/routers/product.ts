@@ -402,4 +402,96 @@ export const productRouter = createTRPCRouter({
         orderBy: { inventory: "asc" },
       });
     }),
+
+  incrementViews: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.product.update({
+        where: { id: input.id },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      });
+    }),
+
+  getCategories: protectedProcedure
+    .input(z.object({ businessId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // Verify business ownership
+      const business = await ctx.db.business.findUnique({
+        where: { id: input.businessId },
+        select: { ownerId: true },
+      });
+
+      if (business?.ownerId !== ctx.user.id) {
+        throw new Error("Access denied");
+      }
+
+      // Get distinct categories from products
+      const products = await ctx.db.product.findMany({
+        where: {
+          businessId: input.businessId,
+          category: {
+            not: null,
+          },
+        },
+        select: {
+          category: true,
+        },
+        distinct: ["category"],
+      });
+
+      return products
+        .map((p) => p.category)
+        .filter((c): c is string => c !== null)
+        .sort();
+    }),
+
+  getStats: protectedProcedure
+    .input(z.object({ businessId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // Verify business ownership
+      const business = await ctx.db.business.findUnique({
+        where: { id: input.businessId },
+        select: { ownerId: true },
+      });
+
+      if (business?.ownerId !== ctx.user.id) {
+        throw new Error("Access denied");
+      }
+
+      const [totalProducts, activeProducts, lowStockCount, totalViews] = await Promise.all([
+        ctx.db.product.count({
+          where: { businessId: input.businessId },
+        }),
+        ctx.db.product.count({
+          where: { businessId: input.businessId, isActive: true },
+        }),
+        ctx.db.product.count({
+          where: {
+            businessId: input.businessId,
+            isActive: true,
+            inventory: {
+              lte: ctx.db.product.fields.lowStockAlert,
+            },
+          },
+        }),
+        ctx.db.product.aggregate({
+          where: { businessId: input.businessId },
+          _sum: {
+            views: true,
+          },
+        }),
+      ]);
+
+      return {
+        total: totalProducts,
+        active: activeProducts,
+        inactive: totalProducts - activeProducts,
+        lowStock: lowStockCount,
+        totalViews: totalViews._sum.views || 0,
+      };
+    }),
 });

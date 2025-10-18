@@ -13,6 +13,8 @@ import { businessRouter } from "./routers/business";
 import { productRouter } from "./routers/product";
 import { customerRouter } from "./routers/customer";
 import { orderRouter } from "./routers/order";
+import { trackingLinkRouter } from "./routers/tracking-link";
+import { checkoutLinkRouter } from "./routers/checkout-link";
 
 /**
  * This is the primary router for your server.
@@ -34,6 +36,8 @@ export const appRouter = createTRPCRouter({
   product: productRouter,
   customer: customerRouter,
   order: orderRouter,
+  trackingLink: trackingLinkRouter,
+  checkoutLink: checkoutLinkRouter,
 });
 
 // export type definition of API

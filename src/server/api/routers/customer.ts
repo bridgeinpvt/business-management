@@ -318,4 +318,177 @@ export const customerRouter = createTRPCRouter({
         monthlyData,
       };
     }),
+
+  create: protectedProcedure
+    .input(z.object({
+      businessId: z.string(),
+      userId: z.string(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify business ownership
+      const business = await ctx.db.business.findUnique({
+        where: { id: input.businessId },
+        select: { ownerId: true },
+      });
+
+      if (business?.ownerId !== ctx.user.id) {
+        throw new Error("Access denied");
+      }
+
+      // Check if customer already exists
+      const existingCustomer = await ctx.db.customer.findUnique({
+        where: {
+          userId_businessId: {
+            userId: input.userId,
+            businessId: input.businessId,
+          },
+        },
+      });
+
+      if (existingCustomer) {
+        throw new Error("Customer already exists for this business");
+      }
+
+      return await ctx.db.customer.create({
+        data: {
+          userId: input.userId,
+          businessId: input.businessId,
+          notes: input.notes,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              image: true,
+            },
+          },
+        },
+      });
+    }),
+
+  exportData: protectedProcedure
+    .input(z.object({
+      businessId: z.string(),
+      search: z.string().optional(),
+      sortBy: z.enum(["newest", "oldest", "highest_spent", "most_orders"]).default("newest"),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Verify business ownership
+      const business = await ctx.db.business.findUnique({
+        where: { id: input.businessId },
+        select: { ownerId: true },
+      });
+
+      if (business?.ownerId !== ctx.user.id) {
+        throw new Error("Access denied");
+      }
+
+      const orderBy = (() => {
+        switch (input.sortBy) {
+          case "oldest":
+            return { createdAt: "asc" as const };
+          case "highest_spent":
+            return { totalSpent: "desc" as const };
+          case "most_orders":
+            return { orderCount: "desc" as const };
+          default:
+            return { createdAt: "desc" as const };
+        }
+      })();
+
+      const where = {
+        businessId: input.businessId,
+        ...(input.search && {
+          user: {
+            OR: [
+              { name: { contains: input.search, mode: "insensitive" as const } },
+              { email: { contains: input.search, mode: "insensitive" as const } },
+              { phone: { contains: input.search, mode: "insensitive" as const } },
+            ],
+          },
+        }),
+      };
+
+      const customers = await ctx.db.customer.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          orders: {
+            select: {
+              id: true,
+              createdAt: true,
+              status: true,
+            },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy,
+      });
+
+      // Format data for CSV
+      const csvData = customers.map((customer) => ({
+        name: customer.user.name || "",
+        email: customer.user.email || "",
+        phone: customer.user.phone || "",
+        totalSpent: customer.totalSpent,
+        orderCount: customer.orderCount,
+        lastOrderDate: customer.orders[0]?.createdAt?.toISOString() || "",
+        lastOrderStatus: customer.orders[0]?.status || "",
+        joinDate: customer.createdAt.toISOString(),
+        notes: customer.notes || "",
+      }));
+
+      return csvData;
+    }),
+
+  getStats: protectedProcedure
+    .input(z.object({ businessId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // Verify business ownership
+      const business = await ctx.db.business.findUnique({
+        where: { id: input.businessId },
+        select: { ownerId: true },
+      });
+
+      if (business?.ownerId !== ctx.user.id) {
+        throw new Error("Access denied");
+      }
+
+      const [totalCustomers, activeCustomers, totalSpent] = await Promise.all([
+        ctx.db.customer.count({
+          where: { businessId: input.businessId },
+        }),
+        ctx.db.customer.count({
+          where: {
+            businessId: input.businessId,
+            orderCount: { gt: 0 },
+          },
+        }),
+        ctx.db.customer.aggregate({
+          where: { businessId: input.businessId },
+          _sum: {
+            totalSpent: true,
+          },
+        }),
+      ]);
+
+      return {
+        total: totalCustomers,
+        active: activeCustomers,
+        inactive: totalCustomers - activeCustomers,
+        totalRevenue: totalSpent._sum.totalSpent || 0,
+        averageSpent: totalCustomers > 0 ? (totalSpent._sum.totalSpent || 0) / totalCustomers : 0,
+      };
+    }),
 });

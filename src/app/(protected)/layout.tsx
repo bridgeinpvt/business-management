@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { usePathname } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -14,15 +14,28 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Middleware already handles authentication, just get user data
-  const { isLoading: userLoading, error: userError } = api.user.getCurrentUser.useQuery(
+  const { data: user, isLoading: userLoading, error: userError } = api.user.getCurrentUser.useQuery(
     undefined,
     {
       retry: false,
     }
   );
+
+  // Check if user has businesses and redirect to create-business if they don't
+  useEffect(() => {
+    if (user && !userLoading) {
+      const businessCount = user.counts?.businesses || 0;
+
+      // Only redirect if user has no businesses and is not already on the create-business or business page
+      if (businessCount === 0 && pathname !== '/create-business' && pathname !== '/business') {
+        router.push('/create-business');
+      }
+    }
+  }, [user, userLoading, pathname, router]);
 
   if (userLoading) {
     return (

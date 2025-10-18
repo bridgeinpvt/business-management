@@ -271,6 +271,8 @@ export const businessRouter = createTRPCRouter({
         totalProducts,
         recentOrders,
         topProducts,
+        totalProductViews,
+        completedOrders,
       ] = await Promise.all([
         ctx.db.order.aggregate({
           where: {
@@ -321,15 +323,185 @@ export const businessRouter = createTRPCRouter({
             images: true,
           },
         }),
+        ctx.db.product.aggregate({
+          where: {
+            businessId: input.businessId,
+            createdAt: { gte: startDate },
+          },
+          _sum: { views: true },
+        }),
+        ctx.db.order.count({
+          where: {
+            businessId: input.businessId,
+            paymentStatus: "COMPLETED",
+            createdAt: { gte: startDate },
+          },
+        }),
       ]);
+
+      // Calculate conversion rate: (completed orders / total product views) * 100
+      const totalViews = totalProductViews._sum.views || 0;
+      const conversionRate = totalViews > 0 ? (completedOrders / totalViews) * 100 : 0;
 
       return {
         revenue: totalRevenue._sum.finalAmount || 0,
         orders: totalOrders,
         customers: totalCustomers,
         products: totalProducts,
+        conversionRate,
+        totalViews,
+        completedOrders,
         recentOrders,
         topProducts,
+      };
+    }),
+
+  getRevenueGrowth: protectedProcedure
+    .input(z.object({
+      businessId: z.string(),
+      months: z.number().default(12),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Verify ownership
+      const business = await ctx.db.business.findUnique({
+        where: { id: input.businessId },
+        select: { ownerId: true },
+      });
+
+      if (business?.ownerId !== ctx.user.id) {
+        throw new Error("Access denied");
+      }
+
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - input.months);
+
+      const orders = await ctx.db.order.findMany({
+        where: {
+          businessId: input.businessId,
+          paymentStatus: "COMPLETED",
+          createdAt: { gte: startDate },
+        },
+        select: {
+          finalAmount: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      });
+
+      // Group revenue by month
+      const revenueByMonth = orders.reduce((acc, order) => {
+        const month = order.createdAt.toISOString().substring(0, 7); // YYYY-MM format
+        acc[month] = (acc[month] || 0) + order.finalAmount;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Convert to array format for charts
+      const revenueData = Object.entries(revenueByMonth)
+        .map(([month, revenue]) => ({
+          month,
+          revenue,
+        }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      return revenueData;
+    }),
+
+  getDashboardStats: protectedProcedure
+    .input(z.object({ businessId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // Verify ownership
+      const business = await ctx.db.business.findUnique({
+        where: { id: input.businessId },
+        select: { ownerId: true },
+      });
+
+      if (business?.ownerId !== ctx.user.id) {
+        throw new Error("Access denied");
+      }
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const [
+        totalRevenue,
+        previousRevenue,
+        totalProducts,
+        totalCustomers,
+        newCustomers,
+        productViews,
+        completedOrders,
+      ] = await Promise.all([
+        // Current period revenue
+        ctx.db.order.aggregate({
+          where: {
+            businessId: input.businessId,
+            paymentStatus: "COMPLETED",
+            createdAt: { gte: thirtyDaysAgo },
+          },
+          _sum: { finalAmount: true },
+        }),
+        // Previous period revenue (for comparison)
+        ctx.db.order.aggregate({
+          where: {
+            businessId: input.businessId,
+            paymentStatus: "COMPLETED",
+            createdAt: {
+              gte: new Date(thirtyDaysAgo.getTime() - 30 * 24 * 60 * 60 * 1000),
+              lt: thirtyDaysAgo,
+            },
+          },
+          _sum: { finalAmount: true },
+        }),
+        ctx.db.product.count({
+          where: { businessId: input.businessId, isActive: true },
+        }),
+        ctx.db.customer.count({
+          where: { businessId: input.businessId },
+        }),
+        ctx.db.customer.count({
+          where: {
+            businessId: input.businessId,
+            createdAt: { gte: thirtyDaysAgo },
+          },
+        }),
+        ctx.db.product.aggregate({
+          where: {
+            businessId: input.businessId,
+            createdAt: { gte: thirtyDaysAgo },
+          },
+          _sum: { views: true },
+        }),
+        ctx.db.order.count({
+          where: {
+            businessId: input.businessId,
+            paymentStatus: "COMPLETED",
+            createdAt: { gte: thirtyDaysAgo },
+          },
+        }),
+      ]);
+
+      const currentRevenue = totalRevenue._sum.finalAmount || 0;
+      const prevRevenue = previousRevenue._sum.finalAmount || 0;
+      const revenueGrowth = prevRevenue > 0 ? ((currentRevenue - prevRevenue) / prevRevenue) * 100 : 0;
+
+      const totalViews = productViews._sum.views || 0;
+      const conversionRate = totalViews > 0 ? (completedOrders / totalViews) * 100 : 0;
+
+      return {
+        revenue: {
+          value: currentRevenue,
+          growth: revenueGrowth,
+        },
+        products: {
+          value: totalProducts,
+        },
+        customers: {
+          value: totalCustomers,
+          new: newCustomers,
+        },
+        conversionRate: {
+          value: conversionRate,
+        },
       };
     }),
 });

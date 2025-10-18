@@ -1,56 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, UseFormReturn, FieldValues } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/trpc/react";
 
 // Step Components
-import { BusinessInfoStep } from "./steps/business-info-step";
-import { BusinessDetailsStep } from "./steps/business-details-step";
-import { LocationStep } from "./steps/location-step";
-import { PaymentSetupStep } from "./steps/payment-setup-step";
-import { CategoriesStep } from "./steps/categories-step";
-import { ProductsStep } from "./steps/products-step";
-import { ReviewStep } from "./steps/review-step";
-
-// Combined schema for all steps
-const businessSchema = z.object({
-  // Step 1: Business Info
-  name: z.string().min(2, "Business name is required"),
-  description: z.string().optional(),
-  category: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
-
-  // Step 2: Business Details
-  logoUrl: z.string().url().optional().or(z.literal("")),
-  coverImageUrl: z.string().url().optional().or(z.literal("")),
-  contactEmail: z.string().email().optional().or(z.literal("")),
-  contactPhone: z.string().optional(),
-
-  // Step 3: Location
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zipCode: z.string().optional(),
-  country: z.string().optional(),
-
-  // Step 4: Payment Setup
-  upiId: z.string().optional(),
-  bankAccount: z.string().optional(),
-  ifscCode: z.string().optional(),
-  gstin: z.string().optional(),
-
-  // Step 5: Categories (handled separately)
-  // Step 6: Products (handled separately)
-});
-
-type BusinessFormData = z.infer<typeof businessSchema>;
+import { WelcomeStep } from "./steps/welcome-step";
+import { BenefitsStep } from "./steps/benefits-step";
+import { BusinessTypeStep } from "./steps/business-type-step";
+import { BusinessNameStep } from "./steps/business-name-step";
+import { CountryStep } from "./steps/country-step";
+import { AdditionalDetailsStep } from "./steps/additional-details-step";
+import { CongratulationsStep } from "./steps/congratulations-step";
 
 interface BusinessCreationWizardProps {
   currentStep: number;
@@ -58,125 +19,146 @@ interface BusinessCreationWizardProps {
   onComplete: () => void;
 }
 
+interface BusinessData {
+  businessType: string;
+  name: string;
+  country: string;
+  description?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
 export function BusinessCreationWizard({
   currentStep,
   onStepChange,
   onComplete,
 }: BusinessCreationWizardProps) {
-  const [businessData, setBusinessData] = useState<Partial<BusinessFormData>>({
+  const [businessData, setBusinessData] = useState<BusinessData>({
+    businessType: "",
+    name: "",
     country: "India",
-  });
-  const [categories, setCategories] = useState<Array<{ name: string; description?: string }>>([]);
-
-  // Product type that matches what ProductsStep expects
-  interface Product {
-    name: string;
-    description?: string;
-    price: number;
-    originalPrice?: number;
-    category?: string;
-    images: string[];
-    inventory: number;
-  }
-
-  const [products, setProducts] = useState<Product[]>([]);
-
-  const form = useForm<BusinessFormData>({
-    resolver: zodResolver(businessSchema),
-    defaultValues: businessData as BusinessFormData,
+    description: "",
+    contactEmail: "",
+    contactPhone: "",
   });
 
   const createBusinessMutation = api.business.create.useMutation({
     onSuccess: () => {
       toast.success("Business created successfully!");
-      onComplete();
+      onStepChange(7); // Go to congratulations
     },
     onError: (error) => {
       toast.error(error.message || "Failed to create business");
     },
   });
 
-  const canGoNext = () => {
-    switch (currentStep) {
-      case 1:
-        return form.getValues("name")?.length >= 2;
-      case 2:
-        return true; // Optional fields
-      case 3:
-        return true; // Optional fields
-      case 4:
-        return true; // Optional fields
-      case 5:
-        return true; // Categories are optional
-      case 6:
-        return true; // Products are optional
-      case 7:
-        return true; // Review step
-      default:
-        return false;
-    }
+  const handleWelcomeContinue = () => {
+    onStepChange(2);
   };
 
-  const handleNext = async () => {
-    if (currentStep < 7) {
-      // Save current step data
-      const currentData = form.getValues();
-      setBusinessData(prev => ({ ...prev, ...currentData }));
-      onStepChange(currentStep + 1);
-    } else {
-      // Final step - create business
-      await handleSubmit();
-    }
+  const handleBusinessTypeSelect = (type: string) => {
+    setBusinessData((prev) => ({ ...prev, businessType: type }));
   };
 
-  const handleBack = () => {
-    if (currentStep > 1) {
-      onStepChange(currentStep - 1);
-    }
+  const handleNameChange = (name: string) => {
+    setBusinessData((prev) => ({ ...prev, name }));
+  };
+
+  const handleCountryChange = (country: string) => {
+    setBusinessData((prev) => ({ ...prev, country }));
+  };
+
+  const handleDescriptionChange = (description: string) => {
+    setBusinessData((prev) => ({ ...prev, description }));
+  };
+
+  const handleEmailChange = (contactEmail: string) => {
+    setBusinessData((prev) => ({ ...prev, contactEmail }));
+  };
+
+  const handlePhoneChange = (contactPhone: string) => {
+    setBusinessData((prev) => ({ ...prev, contactPhone }));
   };
 
   const handleSubmit = async () => {
-    const formData = form.getValues();
-    const finalData = { ...businessData, ...formData };
+    // Validate required fields
+    if (!businessData.name || businessData.name.length < 2) {
+      toast.error("Please enter a valid business name");
+      return;
+    }
 
+    if (!businessData.businessType) {
+      toast.error("Please select a business type");
+      return;
+    }
+
+    // Create business
     try {
-      await createBusinessMutation.mutateAsync(finalData);
-    } catch {
-      // Error is handled in the mutation
+      await createBusinessMutation.mutateAsync({
+        name: businessData.name,
+        category: businessData.businessType,
+        country: businessData.country,
+        description: businessData.description || undefined,
+        contactEmail: businessData.contactEmail || undefined,
+        contactPhone: businessData.contactPhone || undefined,
+      });
+    } catch (error) {
+      // Error is already handled by mutation's onError
+      throw error;
     }
   };
+
+  // Expose submit function via window for parent to call (AFTER it's defined)
+  if (typeof window !== 'undefined') {
+    (window as any)._submitBusiness = handleSubmit;
+  }
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <BusinessInfoStep form={form as unknown as UseFormReturn<FieldValues>} />;
+        return <WelcomeStep onContinue={handleWelcomeContinue} />;
       case 2:
-        return <BusinessDetailsStep form={form as unknown as UseFormReturn<FieldValues>} />;
+        return <BenefitsStep />;
       case 3:
-        return <LocationStep form={form as unknown as UseFormReturn<FieldValues>} />;
+        return (
+          <BusinessTypeStep
+            selectedType={businessData.businessType}
+            onSelect={handleBusinessTypeSelect}
+          />
+        );
       case 4:
-        return <PaymentSetupStep form={form as unknown as UseFormReturn<FieldValues>} />;
+        return (
+          <BusinessNameStep
+            name={businessData.name}
+            onChange={handleNameChange}
+          />
+        );
       case 5:
         return (
-          <CategoriesStep
-            categories={categories}
-            onCategoriesChange={setCategories}
+          <CountryStep
+            country={businessData.country}
+            onChange={handleCountryChange}
           />
         );
       case 6:
         return (
-          <ProductsStep
-            products={products}
-            onProductsChange={setProducts}
-            categories={categories}
+          <AdditionalDetailsStep
+            description={businessData.description || ""}
+            contactEmail={businessData.contactEmail || ""}
+            contactPhone={businessData.contactPhone || ""}
+            onDescriptionChange={handleDescriptionChange}
+            onEmailChange={handleEmailChange}
+            onPhoneChange={handlePhoneChange}
           />
         );
       case 7:
         return (
-          <ReviewStep
-            businessData={{ ...businessData, ...form.getValues() }}
-            categories={categories}
-            products={products}
+          <CongratulationsStep
+            businessData={{
+              name: businessData.name,
+              businessType: businessData.businessType,
+              country: businessData.country,
+            }}
           />
         );
       default:
@@ -185,50 +167,8 @@ export function BusinessCreationWizard({
   };
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>
-          {currentStep === 1 && "Tell us about your business"}
-          {currentStep === 2 && "Add your business branding"}
-          {currentStep === 3 && "Where is your business located?"}
-          {currentStep === 4 && "Set up payment methods"}
-          {currentStep === 5 && "Organize your products"}
-          {currentStep === 6 && "Add your first products"}
-          {currentStep === 7 && "Review and launch"}
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent>
-        {renderStep()}
-      </CardContent>
-
-      <CardFooter className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          disabled={currentStep === 1}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-
-        <Button
-          onClick={handleNext}
-          disabled={!canGoNext() || createBusinessMutation.isPending}
-        >
-          {currentStep === 7 ? (
-            <>
-              <Check className="w-4 h-4 mr-2" />
-              {createBusinessMutation.isPending ? "Creating..." : "Create Business"}
-            </>
-          ) : (
-            <>
-              Next
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </>
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
+    <div>
+      {renderStep()}
+    </div>
   );
 }
