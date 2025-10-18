@@ -45,8 +45,8 @@ export function useAuth() {
 
 // Logout function to replace signOut from next-auth
 export function signOut() {
-  const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
-  const businessUrl = process.env.NEXT_PUBLIC_BUSINESS_URL || "http://localhost:3004";
+  const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "https://dev.auth.nocage.in";
+  const businessUrl = process.env.NEXT_PUBLIC_BUSINESS_URL || "https://dev.business.nocage.in";
   // Clear cookies and redirect to auth-service logout
   window.location.href = `${authUrl}/api/auth/signout?callbackUrl=${encodeURIComponent(businessUrl)}`;
 }
