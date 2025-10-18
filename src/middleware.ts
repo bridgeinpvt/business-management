@@ -23,60 +23,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If auth_token is in URL, validate and set cookie directly
-  const authTokenFromUrl = request.nextUrl.searchParams.get("auth_token");
-  if (authTokenFromUrl && !pathname.startsWith("/api")) {
-    // Validate token with auth service
-    try {
-      const response = await fetch(`${urls.AUTH_URL}/api/validate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: authTokenFromUrl }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const user = data.user;
-
-        // Remove auth_token from URL
-        const cleanUrl = new URL(request.url);
-        cleanUrl.searchParams.delete("auth_token");
-
-        // Create response with redirect to clean URL
-        const redirectResponse = NextResponse.redirect(cleanUrl.toString());
-
-        // Set cookie
-        redirectResponse.cookies.set("nocage-auth", authTokenFromUrl, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 7, // 7 days
-          path: "/",
-        });
-
-        // Add user info to headers for this request
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set('x-user-id', user.id);
-        requestHeaders.set('x-user-email', user.email);
-        requestHeaders.set('x-user-name', user.name || '');
-        requestHeaders.set('x-user-capsule-enrolled', user.capsuleEnrolled.toString());
-        requestHeaders.set('x-user-business-enrolled', user.businessEnrolled.toString());
-
-        return redirectResponse;
-      }
-    } catch (error) {
-      console.error('Token validation failed:', error);
-    }
-
-    // If validation fails, remove token from URL and continue
-    const cleanUrl = new URL(request.url);
-    cleanUrl.searchParams.delete("auth_token");
-    return NextResponse.redirect(cleanUrl.toString());
-  }
-
   // For API routes, validate token but don't redirect (just add headers or return 401)
   if (pathname.startsWith("/api")) {
-    const authToken = request.cookies.get('nocage-auth')?.value;
+    // Check for NextAuth session cookie on shared .nocage.in domain
+    const authToken = request.cookies.get('next-auth.session-token')?.value;
 
     if (!authToken) {
       // For API routes without token, still let them through but without user headers
@@ -118,13 +68,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // For page routes, use full auth middleware with redirects
-  return authMiddleware(request, {
-    authDomain: urls.AUTH_DOMAIN,
-    currentDomain: urls.BUSINESS_DOMAIN,
-    cookieDomain: urls.COOKIE_DOMAIN,
-    publicPaths: [],
-  });
+  // For page routes, check for NextAuth session cookie
+  const authToken = request.cookies.get('next-auth.session-token')?.value;
+
+  if (!authToken) {
+    // No session cookie - redirect to auth service login
+    const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    const publicUrl = `${forwardedProto}://${forwardedHost}${pathname}`;
+    const callbackUrl = encodeURIComponent(publicUrl);
+    const loginUrl = `${urls.AUTH_URL}/login?callbackUrl=${callbackUrl}`;
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Session cookie exists - allow access (NextAuth will handle validation on the client)
+  return NextResponse.next();
 }
 
 export const config = {

@@ -7,7 +7,6 @@ export interface AuthUser {
   image?: string;
   capsuleEnrolled: boolean;
   businessEnrolled: boolean;
-  userRole?: string;
 }
 
 export interface AuthConfig {
@@ -23,7 +22,8 @@ export interface AuthConfig {
  */
 export async function validateAuthToken(token: string, authDomain: string): Promise<AuthUser | null> {
   try {
-    const response = await fetch(`http://${authDomain}/api/validate`, {
+    const authUrl = authDomain.startsWith('http') ? authDomain : `https://${authDomain}`;
+    const response = await fetch(`${authUrl}/api/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,13 +94,18 @@ export async function authMiddleware(request: NextRequest, config: AuthConfig): 
     return null; // Continue to next middleware/handler
   }
 
-  // Get authentication token from cookies
-  const authToken = request.cookies.get('nocage-auth')?.value;
+  // Get authentication token from cookies (NextAuth session token)
+  const authToken = request.cookies.get('next-auth.session-token')?.value;
 
   if (!authToken) {
     // Redirect to auth service for login
-    const callbackUrl = encodeURIComponent(request.url);
-    const loginUrl = `http://${config.authDomain}/api/auth/signin?callbackUrl=${callbackUrl}`;
+    // Construct the public URL using the forwarded host header (from LiteSpeed proxy)
+    const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    const publicUrl = `${forwardedProto}://${forwardedHost}${pathname}`;
+    const callbackUrl = encodeURIComponent(publicUrl);
+    const authUrl = config.authDomain.startsWith('http') ? config.authDomain : `https://${config.authDomain}`;
+    const loginUrl = `${authUrl}/login?callbackUrl=${callbackUrl}`;
     return NextResponse.redirect(loginUrl);
   }
 
@@ -109,15 +114,25 @@ export async function authMiddleware(request: NextRequest, config: AuthConfig): 
 
   if (!user) {
     // Invalid token, redirect to login
-    const callbackUrl = encodeURIComponent(request.url);
-    const loginUrl = `http://${config.authDomain}/api/auth/signin?callbackUrl=${callbackUrl}`;
+    // Construct the public URL using the forwarded host header (from LiteSpeed proxy)
+    const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    const publicUrl = `${forwardedProto}://${forwardedHost}${pathname}`;
+    const callbackUrl = encodeURIComponent(publicUrl);
+    const authUrl = config.authDomain.startsWith('http') ? config.authDomain : `https://${config.authDomain}`;
+    const loginUrl = `${authUrl}/login?callbackUrl=${callbackUrl}`;
     return NextResponse.redirect(loginUrl);
   }
 
   // Check if user has required enrollment
   if (!hasRequiredEnrollment(user, config.requiredEnrollment)) {
     // User doesn't have required enrollment, redirect to enrollment page
-    const enrollmentUrl = `http://${config.authDomain}/enroll?app=${config.requiredEnrollment}&callbackUrl=${encodeURIComponent(request.url)}`;
+    // Construct the public URL using the forwarded host header (from LiteSpeed proxy)
+    const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    const publicUrl = `${forwardedProto}://${forwardedHost}${pathname}`;
+    const authUrl = config.authDomain.startsWith('http') ? config.authDomain : `https://${config.authDomain}`;
+    const enrollmentUrl = `${authUrl}/enroll?app=${config.requiredEnrollment}&callbackUrl=${encodeURIComponent(publicUrl)}`;
     return NextResponse.redirect(enrollmentUrl);
   }
 
@@ -129,7 +144,6 @@ export async function authMiddleware(request: NextRequest, config: AuthConfig): 
   requestHeaders.set('x-user-name', user.name || '');
   requestHeaders.set('x-user-capsule-enrolled', user.capsuleEnrolled.toString());
   requestHeaders.set('x-user-business-enrolled', user.businessEnrolled.toString());
-  requestHeaders.set('x-user-role', user.userRole || '');
 
   return NextResponse.next({
     request: {
@@ -156,7 +170,6 @@ export function getUserFromHeaders(headers: Headers): AuthUser | null {
     image: undefined, // Not passed through headers for security
     capsuleEnrolled: headers.get('x-user-capsule-enrolled') === 'true',
     businessEnrolled: headers.get('x-user-business-enrolled') === 'true',
-    userRole: headers.get('x-user-role') || undefined,
   };
 }
 
@@ -165,7 +178,8 @@ export function getUserFromHeaders(headers: Headers): AuthUser | null {
  */
 export function createLogoutUrl(authDomain: string, callbackUrl?: string): string {
   const callback = callbackUrl || window.location.origin;
-  return `http://${authDomain}/api/auth/signout?callbackUrl=${encodeURIComponent(callback)}`;
+  const authUrl = authDomain.startsWith('http') ? authDomain : `https://${authDomain}`;
+  return `${authUrl}/api/auth/signout?callbackUrl=${encodeURIComponent(callback)}`;
 }
 
 /**
@@ -173,5 +187,6 @@ export function createLogoutUrl(authDomain: string, callbackUrl?: string): strin
  */
 export function createLoginUrl(authDomain: string, callbackUrl?: string): string {
   const callback = callbackUrl || window.location.href;
-  return `http://${authDomain}/login?callbackUrl=${encodeURIComponent(callback)}`;
+  const authUrl = authDomain.startsWith('http') ? authDomain : `https://${authDomain}`;
+  return `${authUrl}/api/auth/signin?callbackUrl=${encodeURIComponent(callback)}`;
 }

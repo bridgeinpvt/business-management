@@ -87,7 +87,7 @@ I'm following up on your recent purchase of "${capsuleName}".
 3. Found the content as described
 
 🔗 **Complete Asset Acknowledgment:**
-Please fill out our quick acknowledgment form: ${process.env.NEXTAUTH_URL || 'https://nocage.com'}/acknowledge/${purchaseId}
+Please fill out our quick acknowledgment form: ${process.env.NEXT_PUBLIC_HUB_URL || 'https://dev.hub.nocage.in'}/acknowledge/${purchaseId}
 
 💬 **Quick Response Options:**
 - Reply "CONFIRMED" if everything is working perfectly
@@ -143,7 +143,7 @@ export async function processAdminResponse(
     switch (response) {
       case "CONFIRMED":
         const acknowledgeLink = purchaseId
-          ? `${process.env.NEXTAUTH_URL || 'https://nocage.com'}/acknowledge/${purchaseId}`
+          ? `${process.env.NEXT_PUBLIC_HUB_URL || 'https://dev.hub.nocage.in'}/acknowledge/${purchaseId}`
           : "Please check your purchase history for the acknowledgment link";
 
         replyMessage = `🎉 Perfect! Thank you for confirming that you received your digital asset successfully.
